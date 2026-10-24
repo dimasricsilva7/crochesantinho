@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800" role="img" aria-label="MAOS CROCHETANDO placeholder 1200x800">
+  <rect width="1200" height="800" fill="#FBF6EE"/>
+  <rect x="12" y="12" width="1176" height="776" fill="none" stroke="#C79A3E" stroke-width="4" stroke-dasharray="14 10" rx="24"/>
+  <g fill="#B65B3C" font-family="Georgia, 'Times New Roman', serif" text-anchor="middle">
+    <text x="600" y="370" font-size="80" font-weight="700">MAOS CROCHETANDO</text>
+    <text x="600" y="445" font-size="50" fill="#7A6E63">maos-crochetando.svg</text>
+    <text x="600" y="520" font-size="45" fill="#7A6E63">placeholder · 1200×800px</text>
+  </g>
+</svg>

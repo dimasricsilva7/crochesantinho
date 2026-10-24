@@ -1,0 +1,666 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { useCart } from "@/components/cart/CartProvider";
+import { QtyStepper } from "@/components/cart/CartDrawer";
+import { ProductVisual } from "@/components/ui/ProductVisual";
+import { LedBoard } from "@/components/ui/LedBoard";
+import { PixelIcon } from "@/components/ui/PixelArt";
+import { gaEvent, getClientContext, metaEvent, newEventId, randomId, track, trackOnce } from "@/lib/client/tracking";
+import { formatBRL } from "@/utils/format";
+import { maskCep, maskCpf, maskPhone, onlyDigits, UF_LIST } from "@/utils/validators";
+import type { CartQuote, QuoteBump } from "@/types/catalog";
+import { OfferModal } from "./OfferModal";
+import { CrediarioFields, EMPTY_CREDIARIO, type CrediarioValue } from "@/components/checkout/CrediarioFields";
+import { parseValidity, validateCrediario, type CrediarioConfig } from "@/lib/crediario";
+import { ReservationBar } from "@/components/checkout/ReservationBar";
+import { TrustSeals } from "@/components/checkout/TrustSeals";
+
+export type PixOption = { enabled: boolean; label: string; badge: string; description: string; button: string };
+
+type Form = {
+  name: string;
+  email: string;
+  phone: string;
+  cpf: string;
+  cep: string;
+  street: string;
+  number: string;
+  complement: string;
+  district: string;
+  city: string;
+  state: string;
+};
+const EMPTY: Form = { name: "", email: "", phone: "", cpf: "", cep: "", street: "", number: "", complement: "", district: "", city: "", state: "" };
+const FORM_KEY = "hb_checkout_form";
+const TOKEN_KEY = "hb_checkout_token";
+const LEAD_KEY = "hb_lead_key";
+
+/** Chave do lead deste carrinho (persiste entre abas; renovada após gerar o pedido). */
+function leadKey(): string {
+  try {
+    const saved = localStorage.getItem(LEAD_KEY);
+    if (saved && /^[A-Za-z0-9_-]{16,64}$/.test(saved)) return saved;
+    const k = randomId(32);
+    localStorage.setItem(LEAD_KEY, k);
+    return k;
+  } catch {
+    return randomId(32);
+  }
+}
+
+function Field({ id, label, error, children, className = "" }: { id: string; label: string; error?: string; children: React.ReactNode; className?: string }) {
+  return (
+    <div className={className}>
+      <label htmlFor={id} className="label">
+        {label}
+      </label>
+      {children}
+      {error && (
+        <p id={`${id}-error`} className="mt-1 text-sm font-semibold text-danger">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function Summary({ q, compact = false }: { q: CartQuote; compact?: boolean }) {
+  return (
+    <div className="space-y-2 text-sm">
+      {!compact &&
+        q.lines.map((l) => (
+          <div key={`${l.kind}-${l.productId}`} className="flex justify-between gap-3">
+            <span className="text-muted">
+              {l.quantity}× {l.name}
+              {l.kind === "ORDER_BUMP" && <span className="ml-1 rounded bg-accent/15 px-1 text-[11px] font-bold text-accent">adicional</span>}
+            </span>
+            <span className="shrink-0 tabular-nums">{formatBRL(l.totalCents)}</span>
+          </div>
+        ))}
+      <div className="flex justify-between border-t border-line pt-2">
+        <span className="text-muted">Subtotal</span>
+        <span className="tabular-nums">{formatBRL(q.subtotalCents)}</span>
+      </div>
+      {q.discountCents > 0 && (
+        <div className="flex justify-between text-success">
+          <span>Desconto{q.coupon?.code ? ` (${q.coupon.code})` : ""}</span>
+          <span className="tabular-nums">− {formatBRL(q.discountCents)}</span>
+        </div>
+      )}
+      {q.requiresShipping && q.shippingCents === 0 && (
+        <div className="flex justify-between">
+          <span className="text-muted">Frete</span>
+          <span className="font-bold text-success">Grátis</span>
+        </div>
+      )}
+      {q.shippingCents > 0 && (
+        <div className="flex justify-between">
+          <span className="text-muted">Frete</span>
+          <span className="tabular-nums">{formatBRL(q.shippingCents)}</span>
+        </div>
+      )}
+      <div className="flex items-baseline justify-between border-t border-line pt-2">
+        <span className="font-bold">Total</span>
+        <span className="font-display text-2xl font-extrabold tabular-nums">{formatBRL(q.totalCents)}</span>
+      </div>
+    </div>
+  );
+}
+
+export function CheckoutClient({ requireCpf, checkoutNote, shippingNote, consentLabel, pix, crediario, cnpj, companyName, reservationMinutes }: { requireCpf: boolean; checkoutNote: string | null; shippingNote: string | null; consentLabel: string; pix: PixOption; crediario: CrediarioConfig; cnpj: string | null; companyName: string | null; reservationMinutes: number }) {
+  const cart = useCart();
+  const router = useRouter();
+  const q = cart.quote;
+  const [form, setForm] = useState<Form>(EMPTY);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [consent, setConsent] = useState(false);
+  const [couponInput, setCouponInput] = useState("");
+  const [couponOpen, setCouponOpen] = useState(false);
+  const [summaryOpen, setSummaryOpen] = useState(false);
+  const [cepLoading, setCepLoading] = useState(false);
+  const started = useRef(false);
+  const modalShown = useRef(false);
+  const [modalBump, setModalBump] = useState<QuoteBump | null>(null);
+  const availableMethods = [pix.enabled && "PIX", crediario.enabled && "CREDIARIO"].filter(Boolean) as ("PIX" | "CREDIARIO")[];
+  const [method, setMethod] = useState<"PIX" | "CREDIARIO">(availableMethods[0] ?? "PIX");
+  const [cred, setCred] = useState<CrediarioValue>(EMPTY_CREDIARIO);
+  const credStarted = useRef(false);
+  const [showAllBumps, setShowAllBumps] = useState(false);
+
+  // Dados do formulário guardados apenas nesta aba (sessionStorage)
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(FORM_KEY) ?? "null");
+      if (saved) setForm({ ...EMPTY, ...saved });
+    } catch {
+      /* ignore */
+    }
+  }, []);
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(FORM_KEY, JSON.stringify(form));
+    } catch {
+      /* ignore */
+    }
+  }, [form]);
+
+  // Link do e-mail de checkout abandonado (?recuperar=token): restaura carrinho e contato
+  const [restoring, setRestoring] = useState(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).has("recuperar"));
+  useEffect(() => {
+    if (!cart.ready || !restoring) return;
+    const token = new URLSearchParams(window.location.search).get("recuperar");
+    fetch(`/api/checkout/lead?token=${encodeURIComponent(token ?? "")}`, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((lead: { clientKey: string; name: string | null; email: string | null; phone: string | null; items: { productId: string; quantity: number }[]; bumpIds: string[]; couponCode: string | null } | null) => {
+        if (!lead) return;
+        if (lead.items?.length) cart.restore({ items: lead.items, bumpIds: lead.bumpIds, couponCode: lead.couponCode });
+        setForm((f) => ({ ...f, name: f.name || lead.name || "", email: f.email || lead.email || "", phone: f.phone || (lead.phone ? maskPhone(lead.phone) : "") }));
+        try {
+          localStorage.setItem(LEAD_KEY, lead.clientKey);
+        } catch {
+          /* ignore */
+        }
+        track("checkout_recovered", { props: { via: "email" } });
+      })
+      .catch(() => null)
+      .finally(() => {
+        setRestoring(false);
+        window.history.replaceState(null, "", "/checkout");
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cart.ready, restoring]);
+
+  // Salva o contato digitado (e-mail ou WhatsApp) para recuperar a compra se a pessoa sair do checkout
+  const lastLead = useRef("");
+  useEffect(() => {
+    if (!cart.ready || restoring || !cart.items.length) return;
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(form.email.trim());
+    if (!emailOk && onlyDigits(form.phone).length < 10) return;
+    const t = setTimeout(() => {
+      const payload = { clientKey: leadKey(), name: form.name.trim() || null, email: emailOk ? form.email.trim() : null, phone: onlyDigits(form.phone) || null, items: cart.items, bumpIds: cart.bumpIds, couponCode: cart.couponCode, context: getClientContext() };
+      const sig = JSON.stringify([payload.clientKey, payload.name, payload.email, payload.phone, payload.items, payload.bumpIds, payload.couponCode]);
+      if (sig === lastLead.current) return;
+      lastLead.current = sig;
+      fetch("/api/checkout/lead", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload), keepalive: true }).catch(() => {
+        lastLead.current = "";
+      });
+    }, 1200);
+    return () => clearTimeout(t);
+  }, [cart.ready, restoring, cart.items, cart.bumpIds, cart.couponCode, form.name, form.email, form.phone]);
+
+  // checkout_started + InitiateCheckout (uma vez, quando o orçamento chega)
+  useEffect(() => {
+    if (!q || started.current || !q.lines.length) return;
+    started.current = true;
+    const main = q.lines.find((l) => l.kind !== "ORDER_BUMP");
+    metaEvent(
+      "InitiateCheckout",
+      { value: q.totalCents / 100, currency: "BRL", num_items: q.lines.reduce((s, l) => s + l.quantity, 0), content_ids: q.lines.map((l) => l.slug), content_type: "product" },
+      { mirror: true, internal: { name: "checkout_started", productId: main?.productId ?? null, valueCents: q.totalCents } }
+    );
+    gaEvent("begin_checkout", { currency: "BRL", value: q.totalCents / 100, items: q.lines.map((l) => ({ item_id: l.slug, item_name: l.name, price: l.unitPriceCents / 100, quantity: l.quantity })) });
+  }, [q]);
+
+  useEffect(() => {
+    q?.bumps.forEach((b) => trackOnce(`bump:${b.id}`, "order_bump_view", { productId: b.productId, element: `bump_${b.id}`, valueCents: b.priceCents, props: { bumpId: b.id } }));
+  }, [q]);
+
+  useEffect(() => {
+    if (q?.coupon && !q.coupon.valid) setErrors((e) => ({ ...e, couponCode: q.coupon?.message ?? "Cupom inválido" }));
+    if (q?.coupon?.valid) {
+      setErrors(({ couponCode: _c, ...rest }) => rest);
+      track("coupon_applied", { valueCents: q.discountCents, props: { code: q.coupon.code } });
+    }
+  }, [q?.coupon, q?.discountCents]);
+
+  const set = (k: keyof Form, v: string) => {
+    setForm((f) => ({ ...f, [k]: v }));
+    if (errors[k] || errors[`customer.${k}`] || errors[`address.${k}`]) setErrors(({ [k]: _a, [`customer.${k}`]: _b, [`address.${k}`]: _c, ...rest }) => rest);
+  };
+
+  async function lookupCep(raw: string) {
+    const cep = onlyDigits(raw);
+    if (cep.length !== 8) return;
+    setCepLoading(true);
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const j = await res.json();
+      if (!j.erro) {
+        setForm((f) => ({ ...f, street: j.logradouro || f.street, district: j.bairro || f.district, city: j.localidade || f.city, state: j.uf || f.state }));
+        // Endereço preenchido: leva direto para o número (o que falta digitar)
+        setTimeout(() => document.getElementById(j.logradouro ? "number" : "street")?.focus(), 50);
+      }
+      else setErrors((e) => ({ ...e, cep: "CEP não encontrado. Confira ou preencha o endereço." }));
+    } catch {
+      /* preenchimento manual */
+    } finally {
+      setCepLoading(false);
+    }
+  }
+
+  function validate(): Record<string, string> {
+    const e: Record<string, string> = {};
+    if (form.name.trim().split(/\s+/).length < 2) e.name = "Informe nome e sobrenome";
+    if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) e.email = "E-mail inválido";
+    if (onlyDigits(form.phone).length < 10) e.phone = "WhatsApp inválido";
+    if (requireCpf && onlyDigits(form.cpf).length !== 11) e.cpf = "Informe seu CPF";
+    if (q?.requiresShipping) {
+      if (onlyDigits(form.cep).length !== 8) e.cep = "CEP inválido";
+      if (!form.street.trim()) e.street = "Informe o endereço";
+      if (!form.number.trim()) e.number = "Informe o número";
+      if (!form.district.trim()) e.district = "Informe o bairro";
+      if (!form.city.trim()) e.city = "Informe a cidade";
+      if (!form.state) e.state = "Selecione a UF";
+    }
+    if (method === "CREDIARIO") for (const [k, v] of Object.entries(validateCrediario(cred, crediario))) e[`crediario.${k}`] = v;
+    return e;
+  }
+
+  async function submit(ev: React.FormEvent | null, opts: { extraBumpIds?: string[]; skipModal?: boolean } = {}) {
+    ev?.preventDefault();
+    if (!q || submitting) return;
+    const e = validate();
+    setErrors(e);
+    if (Object.keys(e).length) {
+      setFormError("Confira os campos destacados.");
+      const first = Object.keys(e)[0];
+      const id = first.startsWith("crediario.") ? ({ protocol: "cred-protocol", validity: "cred-validity", cpfLast3: "cred-cpf", installments: "cred-protocol" }[first.slice(10)] ?? "h-pagamento") : first;
+      document.getElementById(id)?.focus();
+      document.getElementById(id)?.scrollIntoView({ block: "center", behavior: "smooth" });
+      return;
+    }
+    // Oferta em destaque: abre o modal uma única vez, antes de gerar o PIX
+    const offer = q.bumps.find((b) => b.showModal && !cart.bumpIds.includes(b.id));
+    if (offer && !opts.skipModal && !modalShown.current) {
+      modalShown.current = true;
+      setModalBump(offer);
+      track("order_bump_view", { productId: offer.productId, element: "bump_modal", valueCents: offer.priceCents, props: { bumpId: offer.id } });
+      return;
+    }
+    const bumpIds = [...new Set([...cart.bumpIds, ...(opts.extraBumpIds ?? [])])];
+    setFormError(null);
+    setSubmitting(true);
+    // Token de idempotência ligado ao conteúdo do carrinho: repetir o envio do mesmo
+    // carrinho reaproveita o pedido; carrinho alterado gera um pedido novo.
+    const sig = JSON.stringify([cart.items, bumpIds, cart.couponCode, form.email, method, method === "CREDIARIO" ? cred.installments : 0]);
+    let token = "";
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(TOKEN_KEY) ?? "null") as { token: string; sig: string } | null;
+      if (saved?.sig === sig) token = saved.token;
+    } catch {
+      /* ignore */
+    }
+    if (!token) {
+      token = randomId(32);
+      try {
+        sessionStorage.setItem(TOKEN_KEY, JSON.stringify({ token, sig }));
+      } catch {
+        /* ignore */
+      }
+    }
+    const paymentEventId = newEventId("addpaymentinfo");
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          checkoutToken: token,
+          customer: { name: form.name, email: form.email, phone: form.phone, cpf: form.cpf || null },
+          address: q.requiresShipping ? { cep: form.cep, street: form.street, number: form.number, complement: form.complement || null, district: form.district, city: form.city, state: form.state } : null,
+          items: cart.items,
+          bumpIds,
+          couponCode: cart.couponCode,
+          marketingConsent: consent,
+          paymentMethod: method,
+          crediario: method === "CREDIARIO" ? cred : null,
+          paymentEventId,
+          leadKey: leadKey(),
+          context: getClientContext(),
+        }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (json.fields) {
+          const mapped: Record<string, string> = {};
+          for (const [k, v] of Object.entries(json.fields as Record<string, string>)) mapped[k.replace(/^(customer|address)\./, "")] = v;
+          setErrors(mapped);
+        }
+        if (res.status === 409) cart.refresh();
+        // Pedido criado mas PIX falhou: mantém o token para não duplicar o pedido na nova tentativa
+        throw new Error(json.error ?? (method === "CREDIARIO" ? crediario.errorMessage : "Não conseguimos gerar o PIX agora. Tente novamente."));
+      }
+      metaEvent("AddPaymentInfo", { value: json.totalCents / 100, currency: "BRL", payment_type: method === "PIX" ? "pix" : "crediario" }, { eventId: paymentEventId });
+      gaEvent("add_payment_info", { currency: "BRL", value: json.totalCents / 100, payment_type: method === "PIX" ? "pix" : "crediario" });
+      try {
+        sessionStorage.removeItem(TOKEN_KEY);
+        sessionStorage.removeItem(FORM_KEY);
+        localStorage.removeItem(LEAD_KEY);
+      } catch {
+        /* ignore */
+      }
+      cart.clear();
+      router.push(`/pedido/${json.orderNumber}?t=${json.token}`);
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : "Não conseguimos gerar o PIX agora. Tente novamente.");
+      setSubmitting(false);
+    }
+  }
+
+  if (cart.ready && !cart.items.length && !restoring) {
+    return (
+      <div className="container-page max-w-lg py-20 text-center">
+        <h1 className="h-section">Seu carrinho está vazio</h1>
+        <p className="lead mt-3">Escolha um kit para começar a criar.</p>
+        <Link href="/#kits" className="btn-primary mt-8">
+          Escolher meu kit
+        </Link>
+      </div>
+    );
+  }
+  if (!q) {
+    return (
+      <div className="container-page max-w-2xl space-y-4 py-10" aria-busy="true" aria-label="Carregando checkout">
+        {cart.error ? (
+          <div className="rounded-2xl bg-danger/10 p-4 text-center">
+            <p className="font-semibold text-danger">{cart.error}</p>
+            <button onClick={cart.refresh} className="btn-light mt-3">Tentar novamente</button>
+          </div>
+        ) : (
+          [0, 1, 2].map((i) => <div key={i} className="h-40 animate-pulse rounded-card bg-ink/5" />)
+        )}
+      </div>
+    );
+  }
+
+  const productLines = q.lines.filter((l) => l.kind !== "ORDER_BUMP");
+  const inv = (k: string) => (errors[k] ? { "aria-invalid": true as const, "aria-describedby": `${k}-error` } : {});
+
+  return (
+    <>
+    {modalBump && (
+      <OfferModal
+        bump={modalBump}
+        busy={submitting}
+        onAccept={() => {
+          cart.toggleBump(modalBump.id, true);
+          track("order_bump_accept", { productId: modalBump.productId, element: "bump_modal", valueCents: modalBump.priceCents, props: { bumpId: modalBump.id } });
+          const id = modalBump.id;
+          setModalBump(null);
+          submit(null, { extraBumpIds: [id], skipModal: true });
+        }}
+        onDecline={() => {
+          track("order_bump_reject", { productId: modalBump.productId, element: "bump_modal", valueCents: modalBump.priceCents, props: { bumpId: modalBump.id } });
+          setModalBump(null);
+          submit(null, { skipModal: true });
+        }}
+      />
+    )}
+    <div className="container-page">
+      {reservationMinutes > 0 && <div className="pt-4 sm:pt-6"><ReservationBar minutes={reservationMinutes} /></div>}
+    </div>
+    <form onSubmit={submit} noValidate className="container-page grid gap-6 py-4 sm:py-6 lg:grid-cols-[1fr_380px] lg:items-start lg:gap-10">
+      <div className="space-y-5">
+        <h1 className="font-display text-3xl font-extrabold sm:text-4xl">Finalizar compra</h1>
+        <TrustSeals freeShipping={q.shippingCents === 0} cnpj={cnpj} companyName={companyName} />
+
+        {/* Resumo imediato (mobile) */}
+        <section className="card p-4 lg:hidden">
+          <button type="button" onClick={() => setSummaryOpen((o) => !o)} className="flex w-full items-center justify-between gap-3 text-left" aria-expanded={summaryOpen}>
+            <span className="font-bold">
+              {summaryOpen ? "Ocultar" : "Ver"} resumo ({q.lines.reduce((s, l) => s + l.quantity, 0)} {q.lines.length === 1 ? "item" : "itens"})
+            </span>
+            <span className="font-display text-xl font-extrabold tabular-nums">{formatBRL(q.totalCents)}</span>
+          </button>
+          {summaryOpen && <div className="mt-4"><Summary q={q} /></div>}
+        </section>
+
+        {/* Itens */}
+        <section className="card p-4 sm:p-5" aria-labelledby="h-itens">
+          <h2 id="h-itens" className="text-lg font-extrabold">Seu pedido</h2>
+          {q.removed.length > 0 && <p className="mt-2 rounded-xl bg-warning/10 px-3 py-2 text-sm">Removemos itens indisponíveis: {q.removed.join(", ")}.</p>}
+          <ul className="mt-3 space-y-3">
+            {productLines.map((l, i) => (
+              <li key={l.productId} className="flex gap-3">
+                <ProductVisual imageUrl={l.imageUrl} name={l.name} category={l.category} index={i} className="h-16 w-16 shrink-0 rounded-xl" sizes="64px" />
+                <div className="min-w-0 flex-1">
+                  <p className="font-bold leading-tight">{l.name}</p>
+                  <p className="text-sm text-muted">{formatBRL(l.unitPriceCents)}</p>
+                  <div className="mt-1 flex items-center gap-3">
+                    {l.fulfillment !== "DIGITAL" && <QtyStepper value={l.quantity} onChange={(n) => cart.setQuantity(l.productId, n)} label={l.name} />}
+                    <button type="button" onClick={() => cart.remove(l.productId)} className="text-sm font-semibold text-muted underline-offset-2 hover:underline">
+                      Remover
+                    </button>
+                  </div>
+                </div>
+                <p className="shrink-0 font-bold tabular-nums">{formatBRL(l.totalCents)}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* Dados */}
+        <section className="card space-y-4 p-4 sm:p-5" aria-labelledby="h-dados">
+          <h2 id="h-dados" className="text-lg font-extrabold">Seus dados</h2>
+          <Field id="name" label="Nome completo" error={errors.name}>
+            <input id="name" value={form.name} onChange={(e) => set("name", e.target.value)} autoComplete="name" className="input" {...inv("name")} />
+          </Field>
+          <Field id="phone" label="WhatsApp" error={errors.phone}>
+            <input id="phone" value={form.phone} onChange={(e) => set("phone", maskPhone(e.target.value))} autoComplete="tel-national" inputMode="tel" placeholder="(11) 91234-5678" className="input" {...inv("phone")} />
+          </Field>
+          <Field id="email" label="E-mail" error={errors.email}>
+            <input id="email" type="email" value={form.email} onChange={(e) => set("email", e.target.value.trim())} autoComplete="email" inputMode="email" className="input" {...inv("email")} />
+            <p className="mt-1 text-xs text-muted">Guardamos seu contato para você poder continuar a compra depois, caso saia desta página.</p>
+          </Field>
+          {requireCpf && (
+            <Field id="cpf" label="CPF (exigido para o PIX)" error={errors.cpf}>
+              <input id="cpf" value={form.cpf} onChange={(e) => set("cpf", maskCpf(e.target.value))} inputMode="numeric" placeholder="000.000.000-00" className="input" {...inv("cpf")} />
+            </Field>
+          )}
+        </section>
+
+        {/* Entrega */}
+        {q.requiresShipping && (
+          <section className="card grid grid-cols-6 gap-4 p-4 sm:p-5" aria-labelledby="h-entrega">
+            <h2 id="h-entrega" className="col-span-6 flex flex-wrap items-center gap-2 text-lg font-extrabold">Entrega{q.shippingCents === 0 && <span className="rounded-full bg-success/15 px-2.5 py-0.5 text-xs font-extrabold text-success">Frete grátis · 3 a 5 dias úteis</span>}</h2>
+            {shippingNote && <p className="col-span-6 -mt-2 text-sm text-muted">{shippingNote}</p>}
+            <Field id="cep" label={cepLoading ? "CEP (buscando…)" : "CEP"} error={errors.cep} className="col-span-6 sm:col-span-3">
+              <input id="cep" value={form.cep} onChange={(e) => { set("cep", maskCep(e.target.value)); if (onlyDigits(e.target.value).length === 8) lookupCep(e.target.value); }} autoComplete="postal-code" inputMode="numeric" placeholder="00000-000" className="input" {...inv("cep")} />
+            </Field>
+            <Field id="street" label="Endereço" error={errors.street} className="col-span-6">
+              <input id="street" value={form.street} onChange={(e) => set("street", e.target.value)} autoComplete="address-line1" className="input" {...inv("street")} />
+            </Field>
+            <Field id="number" label="Número" error={errors.number} className="col-span-2">
+              <input id="number" value={form.number} onChange={(e) => set("number", e.target.value)} inputMode="numeric" className="input" {...inv("number")} />
+            </Field>
+            <Field id="complement" label="Complemento" className="col-span-4">
+              <input id="complement" value={form.complement} onChange={(e) => set("complement", e.target.value)} autoComplete="address-line2" placeholder="Opcional" className="input" />
+            </Field>
+            <Field id="district" label="Bairro" error={errors.district} className="col-span-6 sm:col-span-3">
+              <input id="district" value={form.district} onChange={(e) => set("district", e.target.value)} className="input" {...inv("district")} />
+            </Field>
+            <Field id="city" label="Cidade" error={errors.city} className="col-span-4 sm:col-span-2">
+              <input id="city" value={form.city} onChange={(e) => set("city", e.target.value)} autoComplete="address-level2" className="input" {...inv("city")} />
+            </Field>
+            <Field id="state" label="UF" error={errors.state} className="col-span-2 sm:col-span-1">
+              <select id="state" value={form.state} onChange={(e) => set("state", e.target.value)} autoComplete="address-level1" className="input px-2" {...inv("state")}>
+                <option value="">—</option>
+                {UF_LIST.map((uf) => (
+                  <option key={uf}>{uf}</option>
+                ))}
+              </select>
+            </Field>
+          </section>
+        )}
+
+        {/* Order bumps — opcionais, desmarcados por padrão */}
+        {q.bumps.length > 0 && (
+          <section className="space-y-3" aria-labelledby="h-extras">
+            <h2 id="h-extras" className="px-1 text-lg font-extrabold">Quer aproveitar? <span className="text-sm font-semibold text-muted">(opcional)</span></h2>
+            {q.bumps.filter((b, i) => showAllBumps || i < 2 || cart.bumpIds.includes(b.id)).map((b) => {
+              const selected = cart.bumpIds.includes(b.id);
+              return (
+              <label key={b.id} className={`flex cursor-pointer gap-3 rounded-card border-2 border-dashed p-4 transition ${selected ? "border-success bg-success/[0.06]" : "border-accent/60 bg-surface"}`}>
+                <input
+                  type="checkbox"
+                  checked={selected}
+                  onChange={(e) => {
+                    cart.toggleBump(b.id, e.target.checked);
+                    track(e.target.checked ? "order_bump_accept" : "order_bump_reject", { productId: b.productId, element: `bump_${b.id}`, valueCents: b.priceCents, props: { bumpId: b.id } });
+                  }}
+                  className="mt-1 h-6 w-6 shrink-0 accent-[rgb(var(--c-success))]"
+                  data-cta={`order_bump_${b.id}`}
+                />
+                {(b.imageUrl || /led/i.test(b.productName)) && (
+                  <span className="relative block h-16 w-16 shrink-0 overflow-hidden rounded-xl">
+                    {b.imageUrl ? <Image src={b.imageUrl} alt={b.productName} fill sizes="64px" className="object-cover" /> : <LedBoard className="h-full w-full" sprite="star" label={false} sizes="64px" />}
+                  </span>
+                )}
+                <span className="min-w-0 flex-1">
+                  {b.discountPct ? <span className="mb-1 inline-block rounded-md bg-accent px-1.5 py-0.5 text-[11px] font-extrabold text-white">-{b.discountPct}% só neste pedido</span> : null}
+                  <span className="flex flex-wrap items-baseline justify-between gap-x-3">
+                    <span className="font-extrabold">{b.title}</span>
+                    <span className="font-extrabold tabular-nums text-accent">
+                      + {formatBRL(b.priceCents)}
+                      {b.listPriceCents && <s className="ml-1 text-xs font-semibold text-muted">{formatBRL(b.listPriceCents)}</s>}
+                    </span>
+                  </span>
+                  {b.description && <span className="mt-1 block text-sm text-muted">{b.description}</span>}
+                  {b.benefit && <span className="mt-1 block text-sm font-semibold text-success">{b.benefit}</span>}
+                  {selected && <span className="mt-2 block animate-pop text-sm font-bold text-success">✓ Adicionado ao pedido</span>}
+                </span>
+              </label>
+              );
+            })}
+            {!showAllBumps && q.bumps.filter((b, i) => i >= 2 && !cart.bumpIds.includes(b.id)).length > 0 && (
+              <button type="button" onClick={() => setShowAllBumps(true)} className="w-full text-center text-sm font-bold text-primary underline-offset-2 hover:underline">
+                Ver mais {q.bumps.filter((b, i) => i >= 2 && !cart.bumpIds.includes(b.id)).length} oferta(s)
+              </button>
+            )}
+          </section>
+        )}
+
+        {/* Cupom */}
+        <section className="card p-4 sm:p-5">
+          {!couponOpen && !cart.couponCode ? (
+            <button type="button" onClick={() => setCouponOpen(true)} className="text-sm font-bold text-primary underline-offset-2 hover:underline">
+              Tenho um cupom de desconto
+            </button>
+          ) : (
+            <div>
+              <label htmlFor="couponCode" className="label">Cupom</label>
+              <div className="flex gap-2">
+                <input id="couponCode" value={couponInput || cart.couponCode || ""} onChange={(e) => setCouponInput(e.target.value.toUpperCase())} className="input uppercase" autoComplete="off" {...inv("couponCode")} />
+                {cart.couponCode ? (
+                  <button type="button" onClick={() => { cart.setCoupon(null); setCouponInput(""); setErrors(({ couponCode: _c, ...r }) => r); }} className="min-h-[52px] shrink-0 rounded-2xl border-2 border-line px-4 text-sm font-bold">
+                    Remover
+                  </button>
+                ) : (
+                  <button type="button" onClick={() => couponInput && cart.setCoupon(couponInput)} className="min-h-[52px] shrink-0 rounded-2xl bg-ink px-4 text-sm font-bold text-white">
+                    Aplicar
+                  </button>
+                )}
+              </div>
+              {errors.couponCode && <p id="couponCode-error" className="mt-1 text-sm font-semibold text-danger">{errors.couponCode}</p>}
+              {q.coupon?.valid && <p className="mt-1 text-sm font-semibold text-success">Cupom aplicado: − {formatBRL(q.discountCents)}</p>}
+            </div>
+          )}
+        </section>
+
+        {/* Forma de pagamento */}
+        <section className="card p-4 sm:p-5" aria-labelledby="h-pagamento">
+          <h2 id="h-pagamento" className="text-lg font-extrabold">Forma de pagamento</h2>
+          {availableMethods.length === 0 && <p className="mt-3 rounded-xl bg-warning/10 px-4 py-3 text-sm">Os pagamentos estão temporariamente indisponíveis. Tente novamente em alguns minutos.</p>}
+          <div className="mt-3 grid gap-3" role="radiogroup" aria-label="Forma de pagamento">
+            {pix.enabled && (
+              <button type="button" role="radio" aria-checked={method === "PIX"} onClick={() => setMethod("PIX")} data-cta="method_pix" className={`flex items-center gap-3 rounded-2xl border-2 p-4 text-left transition ${method === "PIX" ? "border-primary bg-primary/[0.05]" : "border-line hover:border-ink/25"}`}>
+                <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-full border-2 ${method === "PIX" ? "border-primary" : "border-line"}`}>{method === "PIX" && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}</span>
+                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-success/10 text-success"><PixelIcon name="pix" className="h-6 w-6" /></span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex flex-wrap items-center gap-2 font-extrabold">{pix.label}{pix.badge && <span className="rounded-full bg-success/10 px-2 py-0.5 text-[11px] font-bold text-success">{pix.badge}</span>}</span>
+                  {pix.description && <span className="block text-[13px] text-muted">{pix.description}</span>}
+                </span>
+              </button>
+            )}
+            {crediario.enabled && (
+              <button type="button" role="radio" aria-checked={method === "CREDIARIO"} onClick={() => { setMethod("CREDIARIO"); if (!credStarted.current) { credStarted.current = true; trackOnce("crediario_started", "crediario_started", { valueCents: q.totalCents }); } }} data-cta="method_crediario" className={`flex items-center gap-3 rounded-2xl border-2 p-4 text-left transition ${method === "CREDIARIO" ? "border-primary bg-primary/[0.05]" : "border-line hover:border-ink/25"}`}>
+                <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-full border-2 ${method === "CREDIARIO" ? "border-primary" : "border-line"}`}>{method === "CREDIARIO" && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}</span>
+                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><PixelIcon name="gift" className="h-6 w-6" /></span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-extrabold">{crediario.methodLabel}</span>
+                  {crediario.methodSubtitle && <span className="block text-[13px] text-muted">{crediario.methodSubtitle}</span>}
+                </span>
+              </button>
+            )}
+          </div>
+          {method === "CREDIARIO" && crediario.enabled && (
+            <div className="mt-5 border-t border-line pt-5">
+              <CrediarioFields
+                cfg={crediario}
+                totalCents={q.totalCents}
+                value={cred}
+                onChange={(v, field) => {
+                  setCred(v);
+                  setErrors(({ [`crediario.${field}`]: _omit, ...rest }) => rest);
+                  const ok = v.protocol.length === crediario.protocolDigits && v.cpfLast3.length === crediario.cpfDigits && parseValidity(v.validity, crediario.validityFormat);
+                  if (ok) trackOnce("crediario_data", "crediario_data_completed", { valueCents: q.totalCents });
+                }}
+                errors={Object.fromEntries(Object.entries(errors).filter(([k]) => k.startsWith("crediario.")).map(([k, v]) => [k.slice(10), v]))}
+              />
+            </div>
+          )}
+          {checkoutNote && <p className="mt-3 text-sm text-muted">{checkoutNote}</p>}
+        </section>
+
+        <label className="flex cursor-pointer items-start gap-3 px-1 text-sm text-muted">
+          <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 h-5 w-5 shrink-0" />
+          <span>{consentLabel}</span>
+        </label>
+
+        {formError && (
+          <p className="rounded-2xl bg-danger/10 px-4 py-3 font-semibold text-danger" role="alert">
+            {formError}
+          </p>
+        )}
+
+        <div className="lg:hidden">
+          <button type="submit" disabled={submitting || cart.loading || availableMethods.length === 0} data-cta="checkout_submit" className="btn-primary w-full">
+            {submitting ? (method === "CREDIARIO" ? "Registrando pedido…" : "Gerando PIX…") : method === "CREDIARIO" ? `${crediario.buttonLabel} · ${formatBRL(q.totalCents)}` : `${pix.button} · ${formatBRL(q.totalCents)}`}
+          </button>
+          <p className="mt-2 flex items-center justify-center gap-1.5 text-center text-xs font-semibold text-muted">
+            <PixelIcon name="lock" className="h-3.5 w-3.5 text-success" /> Ambiente seguro · seus dados são protegidos
+          </p>
+          <p className="mt-1 text-center text-xs text-muted">
+            Ao continuar, você concorda com os <Link href="/termos" className="underline">Termos</Link> e a <Link href="/politica-de-privacidade" className="underline">Política de Privacidade</Link>.
+          </p>
+          {(companyName || cnpj) && <p className="mt-1 text-center text-[11px] text-muted">{companyName || "Nossa loja"}{cnpj ? ` · CNPJ ${cnpj}` : ""}</p>}
+        </div>
+      </div>
+
+      <aside className="hidden lg:sticky lg:top-6 lg:block">
+        <div className="card p-5">
+          <h2 className="text-lg font-extrabold">Resumo</h2>
+          <div className="mt-4">
+            <Summary q={q} />
+          </div>
+          <button type="submit" disabled={submitting || cart.loading || availableMethods.length === 0} data-cta="checkout_submit" className="btn-primary mt-5 w-full">
+            {submitting ? (method === "CREDIARIO" ? "Registrando pedido…" : "Gerando PIX…") : method === "CREDIARIO" ? crediario.buttonLabel : pix.button}
+          </button>
+          <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-xs font-semibold text-muted">
+            <PixelIcon name="lock" className="h-3.5 w-3.5 text-success" /> Ambiente seguro · dados protegidos
+          </p>
+          <p className="mt-1 text-center text-xs text-muted">
+            Ao continuar, você concorda com os <Link href="/termos" className="underline">Termos</Link> e a <Link href="/politica-de-privacidade" className="underline">Política de Privacidade</Link>.
+          </p>
+        </div>
+        <div className="mt-3"><TrustSeals freeShipping={q.shippingCents === 0} cnpj={cnpj} companyName={companyName} /></div>
+      </aside>
+    </form>
+    </>
+  );
+}

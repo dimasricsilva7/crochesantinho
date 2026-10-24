@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800" role="img" aria-label="N. SRA. APARECIDA placeholder 800x800">
+  <rect width="800" height="800" fill="#FBF6EE"/>
+  <rect x="12" y="12" width="776" height="776" fill="none" stroke="#C79A3E" stroke-width="4" stroke-dasharray="14 10" rx="24"/>
+  <g fill="#B65B3C" font-family="Georgia, 'Times New Roman', serif" text-anchor="middle">
+    <text x="400" y="370" font-size="80" font-weight="700">N. SRA. APARECIDA</text>
+    <text x="400" y="445" font-size="50" fill="#7A6E63">peca-aparecida.svg</text>
+    <text x="400" y="520" font-size="45" fill="#7A6E63">placeholder · 800×800px</text>
+  </g>
+</svg>

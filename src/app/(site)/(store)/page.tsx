@@ -1,6 +1,7 @@
 import { LandingTracker, StickyMobileCTA } from "@/components/landing/client";
 import { DiscountWheel } from "@/components/landing/DiscountWheel";
-import { Autora, Colecao, Conteudo, Destino, Fechamento, FaqList, Hero, Livro, Narrative, Oferta, Pecas, Reviews, type Sec } from "@/components/landing/croche";
+import { Autora, Colecao, Conteudo, Destino, Fechamento, FaqList, Garantia, Hero, Livro, Narrative, Oferta, Pecas, Reviews, VideoSection, type Sec } from "@/components/landing/croche";
+import { SymbolRow } from "@/components/landing/icons";
 import type { PackageCard } from "@/components/landing/PricingCards";
 import { LP_FAQ, LP_PACKAGES, LP_SECTIONS } from "@/content/lp";
 import { getPublicCatalog } from "@/server/catalog";
@@ -8,6 +9,9 @@ import { getApprovedReviews, getFaqs, getLandingSections, loadLandingSectionsDir
 import { getSettings } from "@/server/settings";
 
 export const dynamic = "force-dynamic";
+
+const REF = "https://ateliedonovelo.online/croche/assets";
+const str = (c: Record<string, unknown>, k: string) => (typeof c?.[k] === "string" ? (c[k] as string) : "");
 
 /** Conteúdo de uma seção: banco (se ativo) tem prioridade; senão, a copy do briefing. */
 function merge(key: string, rows: SectionData[]): Sec {
@@ -22,6 +26,7 @@ function merge(key: string, rows: SectionData[]): Sec {
     ctaLabel: row?.ctaLabel ?? fallback?.ctaLabel ?? "",
     ctaTarget: row?.ctaTarget ?? fallback?.ctaTarget ?? "#oferta",
     imageUrl: row?.imageUrl ?? null,
+    videoUrl: row?.videoUrl ?? null,
     config: { ...fCfg, ...rCfg },
   };
 }
@@ -39,8 +44,12 @@ export default async function LandingPage() {
   const faqs = faqsRaw.length ? faqsRaw.map((f) => ({ question: f.question, answer: f.answer })) : LP_FAQ;
   const reviews = reviewsRaw.map((r) => ({ id: r.id, name: r.name, text: r.text, photoUrl: r.photoUrl }));
 
+  // Vídeo: só aparece se a seção estiver ativa E tiver URL (dono liga/desliga no admin).
+  const videoRow = sections.find((s) => s.key === "video");
+  const showVideo = Boolean(videoRow && videoRow.active && videoRow.videoUrl);
+
   // Pacotes: produto do banco (preço editável) + conteúdo da copy (features/bônus/imagem).
-  const images: Record<string, string> = { "pacote-completo": "/img/livro-paginas.svg" };
+  const images: Record<string, string> = { "pacote-completo": `${REF}/pacote-completo.webp` };
   const toCard = (pk: (typeof LP_PACKAGES)[number]): PackageCard | null => {
     const p = catalog.find((c) => c.slug === pk.slug);
     if (!p) return null;
@@ -65,17 +74,19 @@ export default async function LandingPage() {
     <>
       <LandingTracker />
       <Hero sec={get("hero")} />
-      <Narrative sec={get("dor")} id="dor" tone="soft" />
+      <Narrative sec={get("dor")} id="dor" tone="rose" />
+      {showVideo && <VideoSection sec={get("video")} url={videoRow!.videoUrl!} poster={str((videoRow!.config ?? {}) as Record<string, unknown>, "posterUrl")} />}
       <Conteudo sec={get("conteudo")} />
       <Pecas sec={get("pecas")} />
       <Livro sec={get("livro")} />
       <Destino sec={get("destino")} />
       <Colecao sec={get("colecao")} />
-      <Narrative sec={get("diferencial")} id="diferencial" tone="warm" />
+      <SymbolRow className="py-6" />
+      <Narrative sec={get("diferencial")} id="diferencial" tone="soft" flip />
       <Reviews sec={get("reviews")} reviews={reviews} />
       <Autora sec={get("autora")} />
       <Oferta sec={get("oferta")} packages={packages} />
-      <Narrative sec={get("garantia")} id="garantia" tone="soft" seal />
+      <Garantia sec={get("garantia")} />
       <FaqList title={get("faq").title || "Perguntas frequentes"} faqs={faqs} />
       <Fechamento sec={get("fechamento")} />
       <DiscountWheel />

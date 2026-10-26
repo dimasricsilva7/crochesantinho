@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CookiePreferencesLink } from "@/components/providers/CookieBanner";
+import { IconLock } from "@/components/landing/icons";
 import type { Settings } from "@/server/settings";
 
 export function whatsappLink(number: string, text?: string) {
@@ -21,7 +22,7 @@ export function Footer({ s }: { s: Settings }) {
           <span className="font-display text-xl font-semibold text-ink">{s.store_name}</span>
           {s.store_tagline && <p className="max-w-md text-sm text-muted">{s.store_tagline}</p>}
           <p className="inline-flex items-center gap-2 rounded-full bg-success/10 px-3 py-1.5 text-xs font-semibold text-success">
-            <span aria-hidden="true">🔒</span> Pagamento 100% seguro via PIX · Garantia de 7 dias
+            <IconLock className="h-3.5 w-3.5" /> Pagamento 100% seguro via PIX · Garantia de 7 dias
           </p>
 
           <nav aria-label="Políticas" className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm">

@@ -19,12 +19,12 @@ export const SETTING_DEFAULTS: Record<string, string> = {
   tiktok_url: "",
   facebook_url: "",
   youtube_url: "",
-  // Aparência (tokens do design system — paleta devocional e acolhedora)
-  theme_primary: "#B65B3C", // terracota (botões)
-  theme_secondary: "#C79A3E", // dourado suave
-  theme_accent: "#2E5A9C", // azul mariano
-  theme_ink: "#3C2E25", // marrom quente (texto)
-  theme_background: "#FBF6EE", // creme
+  // Aparência (tokens do design system — paleta delicada: bege, rosa, azul, branco, preto)
+  theme_primary: "#B5637A", // rosa suave (CTAs/marca)
+  theme_secondary: "#C8A24C", // dourado delicado (ornamentos)
+  theme_accent: "#34507D", // azul mariano
+  theme_ink: "#2B2420", // quase preto quente (texto)
+  theme_background: "#FAF5EF", // bege/creme
   // Layout
   announcement_text: "",
   header_cta_label: "Ver pacotes",

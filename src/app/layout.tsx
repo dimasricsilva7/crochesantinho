@@ -1,14 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Inter } from "next/font/google";
+import { Outfit, Playfair_Display } from "next/font/google";
 import { siteUrl } from "@/lib/env";
 import { themeCss } from "@/lib/theme";
 import { getSettings } from "@/server/settings";
 import "./globals.css";
 
-// Título em serifada quente (Fraunces), corpo em Inter. --font-pixel reaproveita a serifada (sem uso visual na LP).
-const display = Fraunces({ subsets: ["latin"], variable: "--font-display", weight: ["400", "500", "600", "700", "900"], style: ["normal", "italic"], display: "swap" });
-const body = Inter({ subsets: ["latin"], variable: "--font-body", weight: ["400", "500", "600", "700", "800"], display: "swap" });
-const pixel = Fraunces({ subsets: ["latin"], variable: "--font-pixel", weight: ["600"], display: "swap" });
+// Títulos em serifada delicada (Playfair Display, com itálico), corpo em Outfit — no clima do site de referência.
+const display = Playfair_Display({ subsets: ["latin"], variable: "--font-display", weight: ["400", "500", "600", "700", "800", "900"], style: ["normal", "italic"], display: "swap" });
+const body = Outfit({ subsets: ["latin"], variable: "--font-body", weight: ["300", "400", "500", "600", "700"], display: "swap" });
+const pixel = Playfair_Display({ subsets: ["latin"], variable: "--font-pixel", weight: ["500"], display: "swap" });
 
 export async function generateMetadata(): Promise<Metadata> {
   const s = await getSettings();

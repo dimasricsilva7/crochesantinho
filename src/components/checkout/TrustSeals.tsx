@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { IconBolt, IconLock, IconShield } from "@/components/landing/icons";
 
 /**
  * Selos de confiança + dados da empresa no checkout (produto digital).
@@ -7,16 +8,16 @@ import Link from "next/link";
  */
 export function TrustSeals({ cnpj, companyName, supportEmail }: { cnpj: string | null; companyName: string | null; supportEmail?: string | null }) {
   const seals = [
-    { icon: "🔒", title: "Ambiente seguro", sub: "Conexão criptografada (SSL)" },
-    { icon: "🛡️", title: "Dados protegidos", sub: "Usados só para o seu pedido" },
-    { icon: "⚡", title: "Acesso na hora", sub: "PIX com confirmação imediata" },
+    { Icon: IconLock, title: "Ambiente seguro", sub: "Conexão criptografada (SSL)" },
+    { Icon: IconShield, title: "Dados protegidos", sub: "Usados só para o seu pedido" },
+    { Icon: IconBolt, title: "Acesso na hora", sub: "PIX com confirmação imediata" },
   ];
   return (
     <div className="rounded-2xl border border-line bg-surface p-4">
       <ul className="grid grid-cols-3 gap-2 text-center">
         {seals.map((s) => (
           <li key={s.title} className="flex flex-col items-center gap-1 px-1">
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-success/10 text-base">{s.icon}</span>
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-success/10 text-success"><s.Icon className="h-4 w-4" /></span>
             <span className="text-[12px] font-extrabold leading-tight text-ink">{s.title}</span>
             <span className="hidden text-[11px] leading-tight text-muted sm:block">{s.sub}</span>
           </li>
@@ -24,7 +25,7 @@ export function TrustSeals({ cnpj, companyName, supportEmail }: { cnpj: string |
       </ul>
 
       <div className="mt-3 border-t border-line pt-3 text-center">
-        <p className="inline-flex items-center gap-1.5 text-sm font-bold text-success">AMBIENTE SEGURO <span aria-hidden="true">🔒</span></p>
+        <p className="inline-flex items-center gap-1.5 text-sm font-bold text-success"><IconLock className="h-4 w-4" /> AMBIENTE SEGURO</p>
         <p className="mt-0.5 text-[12px] text-muted">Conexão criptografada por HTTPS</p>
         <p className="mt-2 text-[12px] leading-snug text-muted">
           Este é um produto digital: você receberá por e-mail as receitas em PDF. Nada é enviado pelo correio.

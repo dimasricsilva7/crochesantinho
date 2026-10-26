@@ -4,14 +4,15 @@
 
 /* Tokens do design system. Cores em canais RGB (sobrescritas pelo admin via <style> no layout). */
 :root {
-  --c-primary: 182 91 60;   /* terracota */
-  --c-secondary: 199 154 62; /* dourado suave */
-  --c-accent: 46 90 156;     /* azul mariano */
-  --c-ink: 60 46 37;         /* marrom quente */
-  --c-bg: 251 246 238;       /* creme */
-  --c-surface: 255 253 249;  /* branco quente */
-  --c-muted: 122 110 99;     /* marrom suave */
-  --c-line: 232 223 207;     /* linha creme */
+  --c-primary: 181 99 122;   /* rosa suave (CTAs/marca) */
+  --c-secondary: 200 162 76; /* dourado delicado (ornamentos) */
+  --c-accent: 52 80 125;     /* azul mariano */
+  --c-ink: 43 36 32;         /* quase preto quente */
+  --c-bg: 250 245 239;       /* bege/creme */
+  --c-surface: 255 255 255;  /* branco */
+  --c-muted: 125 112 102;    /* bege acinzentado */
+  --c-line: 234 223 210;     /* linha creme */
+  --c-rose: 246 231 234;     /* rosa muito claro (fundos) */
   --c-success: 27 138 74;
   --c-warning: 180 120 20;
   --c-danger: 192 57 43;
@@ -54,15 +55,21 @@
   .h-section { @apply font-display text-[2rem] font-semibold leading-[1.08] sm:text-4xl lg:text-5xl; }
   .lead { @apply text-lg leading-relaxed text-muted sm:text-xl; }
 
-  /* Botões — alvo de toque ≥ 48px, feedback de pressão (sem depender de hover) */
-  .btn { @apply inline-flex min-h-[52px] items-center justify-center gap-2 rounded-bead px-6 text-[15px] font-extrabold uppercase tracking-wide transition active:translate-y-[3px] disabled:pointer-events-none disabled:opacity-50; }
-  .btn-primary { @apply btn bg-primary text-white shadow-pixel active:shadow-none; }
-  .btn-accent { @apply btn bg-accent text-white shadow-pixel active:shadow-none; }
-  .btn-light { @apply btn border-2 border-ink bg-surface text-ink shadow-pixel-sm active:shadow-none; }
-  .btn-ghost { @apply inline-flex min-h-[48px] items-center justify-center gap-2 rounded-bead px-4 text-sm font-bold text-ink underline-offset-4 hover:underline; }
+  /* Botões — alvo de toque ≥ 52px, cantos suaves, gradiente delicado e sombra macia */
+  .btn { @apply inline-flex min-h-[54px] items-center justify-center gap-2 rounded-full px-7 text-[15px] font-semibold tracking-wide transition-all duration-200 active:translate-y-[1px] disabled:pointer-events-none disabled:opacity-50; }
+  .btn-primary { @apply btn text-white shadow-soft; background-image: linear-gradient(135deg, rgb(var(--c-primary)) 0%, rgb(var(--c-primary) / 0.82) 55%, rgb(201 106 92) 100%); }
+  .btn-accent { @apply btn text-white shadow-soft; background-image: linear-gradient(135deg, rgb(var(--c-accent)) 0%, rgb(var(--c-accent) / 0.85) 100%); }
+  .btn-gold { @apply btn text-ink shadow-soft; background-image: linear-gradient(135deg, rgb(226 196 120) 0%, rgb(var(--c-secondary)) 100%); }
+  .btn-light { @apply btn border border-line bg-surface text-ink shadow-soft; }
+  .btn-ghost { @apply inline-flex min-h-[48px] items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold text-ink underline-offset-4 hover:underline; }
   @media (hover: hover) {
-    .btn-primary:hover, .btn-accent:hover, .btn-light:hover { transform: translateY(-1px); }
+    .btn-primary:hover, .btn-accent:hover, .btn-gold:hover, .btn-light:hover { transform: translateY(-2px); box-shadow: 0 10px 28px -10px rgb(43 36 32 / 0.28); }
   }
+
+  /* Elementos gráficos (ornamentos de crochê, delicados) */
+  .ornament { @apply flex items-center justify-center gap-3 text-secondary/70; }
+  .ornament::before, .ornament::after { content: ""; @apply h-px w-12 bg-gradient-to-r from-transparent via-secondary/40 to-transparent sm:w-20; }
+  .symbol-row { color: rgb(var(--c-secondary) / 0.4); font-size: 13px; letter-spacing: 10px; text-align: center; user-select: none; overflow: hidden; white-space: nowrap; }
 
   .card { @apply rounded-card border border-line bg-surface shadow-soft; }
   .chip { @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold; }

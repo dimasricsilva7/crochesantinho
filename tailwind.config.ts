@@ -11,6 +11,7 @@ const config: Config = {
         primary: token("primary"),
         secondary: token("secondary"),
         accent: token("accent"),
+        rose: token("rose"),
         ink: token("ink"),
         bg: token("bg"),
         surface: token("surface"),

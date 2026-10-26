@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { AddToCartButton } from "./client";
 import { DISCOUNT_EVENT, hasWheelDiscount } from "./DiscountWheel";
+import { IconCheck, IconFlower } from "./icons";
 import { formatBRL } from "@/utils/format";
 
 export type PackageCard = {
@@ -36,7 +37,9 @@ function Price({ pkg, discounted }: { pkg: PackageCard; discounted: boolean }) {
       ) : (
         <>
           <p className="text-center font-display text-5xl font-semibold tracking-tight text-ink">{formatBRL(main)}</p>
-          <p className="mt-1 text-center text-sm font-semibold text-primary">🎁 Gire a roleta e pague {formatBRL(pkg.priceCents)}</p>
+          <p className="mt-1 inline-flex w-full items-center justify-center gap-1.5 text-center text-sm font-semibold text-primary">
+            <IconFlower className="h-4 w-4" /> Gire a roleta e pague {formatBRL(pkg.priceCents)}
+          </p>
         </>
       )}
     </div>
@@ -48,7 +51,9 @@ function Card({ pkg, discounted }: { pkg: PackageCard; discounted: boolean }) {
   return (
     <article className={`relative flex h-full flex-col rounded-[1.5rem] bg-surface p-6 shadow-soft ${pkg.featured ? "border-[3px] border-secondary shadow-lift" : "border border-line"}`}>
       {pkg.badge && (
-        <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-secondary px-4 py-1 text-xs font-bold text-ink shadow-soft">🎁 {pkg.badge}</span>
+        <span className="absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full bg-gradient-to-r from-secondary to-[#B88322] px-4 py-1 text-xs font-bold text-ink shadow-soft">
+          <IconFlower className="h-3.5 w-3.5" /> {pkg.badge}
+        </span>
       )}
       <p className="font-display text-base italic text-muted">{pkg.tagline}</p>
       <h3 className="font-display text-2xl font-semibold text-ink">{pkg.name}</h3>
@@ -60,18 +65,20 @@ function Card({ pkg, discounted }: { pkg: PackageCard; discounted: boolean }) {
       <ul className="mt-4 space-y-2 text-[15px]">
         {pkg.features.map((f, i) => (
           <li key={i} className="flex items-start gap-2">
-            <span className="mt-1 text-success" aria-hidden="true">✓</span>
+            <IconCheck className="mt-1 h-4 w-4 shrink-0 text-success" />
             <span>{f}</span>
           </li>
         ))}
       </ul>
       {pkg.bonuses && pkg.bonuses.length > 0 && (
         <div className="mt-4 rounded-2xl bg-secondary/10 p-4">
-          <p className="text-xs font-bold uppercase tracking-wide text-secondary">🎁 E de presente</p>
+          <p className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-secondary">
+            <IconFlower className="h-3.5 w-3.5" /> E de presente
+          </p>
           <ul className="mt-2 space-y-1.5 text-sm">
             {pkg.bonuses.map((b, i) => (
               <li key={i} className="flex items-start gap-2">
-                <span className="mt-0.5 text-secondary" aria-hidden="true">✛</span>
+                <IconFlower className="mt-0.5 h-3.5 w-3.5 shrink-0 text-secondary" />
                 <span>{b}</span>
               </li>
             ))}

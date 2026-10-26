@@ -1,10 +1,14 @@
 /**
  * Copy + catálogo da landing "Fé em Crochê — Santinhas de Crochê".
- * Fonte única: semeada no banco (prisma/seed.ts) para o admin editar e usada como FALLBACK na render.
- * NÃO importa nada interno (@/...) — é importado pela app (@/content/lp) e pelo seed (../src/content/lp).
+ * Fonte única: semeada no banco (prisma/seed.ts) e usada como FALLBACK na render.
+ * NÃO importa nada interno (@/...).
  *
- * Regra: nada é inventado. Depoimentos, nº de artesãs e história da autora vão como // TODO.
+ * IMAGENS: as santas usam imagens por LINK (editáveis no admin/config). Os URLs padrão abaixo
+ * apontam para o site de referência enquanto o dono não sobe as próprias (trocar por link no admin).
+ * Regra: nada é inventado. Depoimentos, autora e atributos dos SANTOS vão como // TODO (preencher).
  */
+
+const REF = "https://ateliedonovelo.online/croche/assets";
 
 export type LpSection = {
   key: string;
@@ -18,31 +22,31 @@ export type LpSection = {
   config?: Record<string, unknown>;
 };
 
-// ───────────── Coleção: 20 desenhos (10 santas + 10 santos) ─────────────
-export const LP_SANTAS = [
-  "Nossa Senhora Aparecida",
-  "Nossa Senhora de Fátima",
-  "Nossa Senhora das Graças",
-  "Nossa Senhora Rainha",
-  "Santa Teresinha",
-  "Santa Joana d'Arc",
-  "Santa Rosa",
-  "Santa Cecília",
-  "Santa Luzia",
-  "Santa Rita",
+export type SaintCard = { n: number; name: string; title: string; attrs: string; img: string };
+
+// ───────────── Coleção: 10 santas (com imagens do site de referência, por link) ─────────────
+export const SANTA_CARDS: SaintCard[] = [
+  { n: 1, name: "Nossa Senhora Rainha", title: "Coroa dourada e Sagrado Coração", attrs: "Coroa com pérolas, manto bordado de rosas, coração com chama e raios, terço com medalha", img: `${REF}/santa-rainha-m.webp` },
+  { n: 2, name: "Nossa Senhora Aparecida", title: "A padroeira do Brasil", attrs: "Manto azul-marinho com arabescos, coroa real, gola de pérolas, rosário", img: `${REF}/santa-aparecida-m.webp` },
+  { n: 3, name: "Nossa Senhora das Graças", title: "A da Medalha Milagrosa", attrs: "Manto azul com lírios, faixa azul, medalha, rosário", img: `${REF}/santa-gracas-m.webp` },
+  { n: 4, name: "Nossa Senhora de Fátima", title: "A Senhora do Rosário", attrs: "Véu branco, faixa azul, coroa de flores, painéis com rosas, rosário", img: `${REF}/santa-fatima-m.webp` },
+  { n: 5, name: "Santa Teresinha", title: "A santa das rosas", attrs: "Véu preto e branco, hábito marrom, manto floral, buquê, crucifixo", img: `${REF}/santa-teresinha-m.webp` },
+  { n: 6, name: "Santa Joana d'Arc", title: "Coragem para cumprir a missão", attrs: "Armadura, saia com flor-de-lis, estandarte, espada, cinto e botas", img: `${REF}/santa-joana-m.webp` },
+  { n: 7, name: "Santa Rosa", title: "A coroa de rosas", attrs: "Coroa de rosas, véu creme, manto marrom florido, buquê, terço perolado", img: `${REF}/santa-rosa-m.webp` },
+  { n: 8, name: "Santa Cecília", title: "A padroeira dos músicos", attrs: "Harpa, coroa de rosas, vestido com barrado dourado, manto bordado", img: `${REF}/santa-cecilia-m.webp` },
+  { n: 9, name: "Santa Luzia", title: "A protetora dos olhos", attrs: "Manto vermelho com lírios, lamparina, ramo de palma, cordão com borlas", img: `${REF}/santa-luzia-m.webp` },
+  { n: 10, name: "Santa Rita", title: "A santa das causas impossíveis", attrs: "Hábito preto, touca branca, buquê de rosas, crucifixo, rosário", img: `${REF}/santa-rita-m.webp` },
 ];
-export const LP_SANTOS = [
-  "São José",
-  "Santo Antônio",
-  "São Francisco",
-  "São Jorge",
-  "São Pedro",
-  "São Paulo",
-  "São Bento",
-  "São Sebastião",
-  "São João Batista",
-  "São Judas Tadeu",
-];
+
+// 10 santos — imagens e atributos ainda não existem (o site de referência não vende santos).
+// Placeholder por enquanto; dono adiciona foto por link e os detalhes no admin. // TODO: imagens/atributos reais
+export const SANTO_CARDS: SaintCard[] = [
+  "São José", "Santo Antônio", "São Francisco", "São Jorge", "São Pedro",
+  "São Paulo", "São Bento", "São Sebastião", "São João Batista", "São Judas Tadeu",
+].map((name, i) => ({ n: i + 1, name, title: "", attrs: "", img: "/img/santo-placeholder.svg" }));
+
+export const LP_SANTAS = SANTA_CARDS.map((s) => s.name);
+export const LP_SANTOS = SANTO_CARDS.map((s) => s.name);
 
 // ───────────── Seções da landing ─────────────
 export const LP_SECTIONS: LpSection[] = [
@@ -57,6 +61,7 @@ export const LP_SECTIONS: LpSection[] = [
     config: {
       eyebrow: "Santinhas de Crochê · receitas de amigurumi",
       trust: "Com 50% de desconto · a partir de R$ 19,90 · PDF no e-mail · 7 dias de garantia",
+      image: `${REF}/checkout-santas.webp`,
     },
   },
   {
@@ -65,6 +70,15 @@ export const LP_SECTIONS: LpSection[] = [
     label: "Dor — Já aconteceu com você?",
     title: "Já aconteceu com você?",
     body: "Você senta com a linha na mão, cheia de vontade de fazer uma Nossa Senhora, e vai procurar como faz. Acha mil vídeos, cada um de um jeito, a moça fala rápido e corta justo na hora de montar. Aí você desmancha, refaz, desmancha de novo… e guarda tudo com aquela pontinha de raiva. Não é que você não sabe crochê. É que ninguém nunca te deu o gráfico certo, com cada parte explicada.",
+    config: { imageUrl: `${REF}/santa-aparecida.webp` },
+  },
+  {
+    key: "video",
+    type: "video",
+    label: "Vídeo (ative no admin)",
+    title: "Veja uma santinha nascer na agulha",
+    subtitle: "Da primeira carreira ao acabamento.",
+    config: { desktopVideoUrl: "", posterUrl: "" },
   },
   {
     key: "conteudo",
@@ -75,8 +89,8 @@ export const LP_SECTIONS: LpSection[] = [
       "Cada santinha vem com o corpo e as peças separados. De cada peça você recebe a foto de como fica pronta, o gráfico e as cores do fio — e a legenda dos pontos. Abre no celular e fica do lado da sua poltrona, ou imprime em A4.",
     config: {
       items: [
-        { icon: "grid", title: "O gráfico desenhado parte por parte", text: "Cabeça, manto, base — cada peça da santinha no gráfico." },
-        { icon: "palette", title: "A lista de material", text: "Qual linha, qual agulha e as cores do fio de cada peça." },
+        { icon: "chart", title: "O gráfico desenhado parte por parte", text: "Cabeça, manto, base — cada peça da santinha no gráfico." },
+        { icon: "hook", title: "A lista de material", text: "Qual linha, qual agulha e as cores do fio de cada peça." },
         { icon: "check", title: "O passo a passo de montagem", text: "A ordem certa de juntar tudo, sem adivinhação." },
       ],
     },
@@ -89,17 +103,8 @@ export const LP_SECTIONS: LpSection[] = [
     subtitle: "Exemplo: Santa Teresinha — cada uma das sete peças com a foto de como fica pronta, o gráfico e as cores do fio. Embaixo, a legenda dos pontos.",
     body: "",
     config: {
-      image: "/img/pecas-folha.svg",
-      pieces: [
-        "Auréola florida",
-        "Véu preto e branco",
-        "Manto com rosas",
-        "Túnica marrom",
-        "Buquê de rosas",
-        "Crucifixo",
-        "Terço dourado",
-        "Legenda dos pontos",
-      ],
+      image: `${REF}/receitateresinha.webp`,
+      pieces: ["Auréola florida", "Véu preto e branco", "Manto com rosas", "Túnica marrom", "Buquê de rosas", "Crucifixo", "Terço dourado", "Legenda dos pontos"],
     },
   },
   {
@@ -110,14 +115,14 @@ export const LP_SECTIONS: LpSection[] = [
     subtitle:
       "No Pacote Completo: o livro de receitas tem 150 páginas. Começa pela base que todas as santinhas usam (corpo, cabeça, braços e cabelo) e depois traz um capítulo para cada santa, com as cores, as roupas, os acessórios e a ordem de montagem.",
     config: {
-      image: "/img/livro-paginas.svg",
+      image: `${REF}/pacote-completo.webp`,
       items: [
-        { icon: "palette", title: "Materiais e linha por cor", text: "Linha, agulha, enchimento e olhos, e quantos gramas de cada cor separar." },
-        { icon: "grid", title: "Carreira por carreira", text: "O que fazer em cada carreira e o total de pontos no fim dela." },
+        { icon: "hook", title: "Materiais e linha por cor", text: "Linha, agulha, enchimento e olhos, e quantos gramas de cada cor separar." },
+        { icon: "chart", title: "Carreira por carreira", text: "O que fazer em cada carreira e o total de pontos no fim dela." },
         { icon: "check", title: "Legenda dos pontos", text: "Anel mágico, ponto baixo, aumento, diminuição, ponto pipoca — cada sigla explicada." },
-        { icon: "star", title: "Montagem em ordem", text: "Onde costurar braços, manto, coroa e flores para a santa ficar de pé e simétrica." },
-        { icon: "heart", title: "Ajustes e soluções", text: "O que fazer se o fundo ondular, se o enchimento aparecer ou se o manto arrastar." },
-        { icon: "gift", title: "As peças ampliadas", text: "Uma prancha por santa, com a foto de cada peça pronta ao lado do gráfico: 60 peças ao todo." },
+        { icon: "flower", title: "Montagem em ordem", text: "Onde costurar braços, manto, coroa e flores para a santa ficar de pé e simétrica." },
+        { icon: "shield", title: "Ajustes e soluções", text: "O que fazer se o fundo ondular, se o enchimento aparecer ou se o manto arrastar." },
+        { icon: "book", title: "As peças ampliadas", text: "Uma prancha por santa, com a foto de cada peça pronta ao lado do gráfico: 60 peças ao todo." },
       ],
     },
   },
@@ -128,7 +133,7 @@ export const LP_SECTIONS: LpSection[] = [
     title: "Cada santinha já nasce com destino certo.",
     subtitle: "",
     config: {
-      image: "/img/colecao-santinhas.svg",
+      image: `${REF}/checkout-santas.webp`,
       cards: [
         { label: "Para a neta", quote: "“Vó, essa é a santa do meu nome?”", text: "Rita, Luzia, Cecília, Rosa, Joana, Teresinha: dá para começar pela santa que tem o nome dela." },
         { label: "Para a primeira comunhão ou o batizado", quote: "“Foi a minha madrinha que fez.”", text: "Um presente que fica anos no quarto da criança e tem uma história para contar." },
@@ -139,11 +144,11 @@ export const LP_SECTIONS: LpSection[] = [
   },
   {
     key: "colecao",
-    type: "product_in_use",
-    label: "A coleção (20 desenhos)",
-    title: "As 20 receitas da coleção",
-    subtitle: "10 santas e 10 santos — comece pela devoção da sua casa.",
-    config: { santas: LP_SANTAS, santos: LP_SANTOS },
+    type: "models_included",
+    label: "A coleção (santas e santos)",
+    title: "Dez santinhas. Dez santos. Cada um com as próprias peças.",
+    subtitle: "Toque em Santas ou Santos para ver todos. O número é a ordem da receita no PDF.",
+    config: { santas: SANTA_CARDS, santos: SANTO_CARDS },
   },
   {
     key: "diferencial",
@@ -151,15 +156,9 @@ export const LP_SECTIONS: LpSection[] = [
     label: "Diferencial",
     title: "Por que aqui é diferente",
     body: 'A maioria vende uma foto bonita e te deixa adivinhar como se chega naquilo. Aqui não. Cada peça vem destrinchada: você vê onde começa, onde aumenta e onde arremata. É quase como ter alguém do seu lado dizendo "agora faz isso".',
-    config: { imageUrl: "/img/maos-crochetando.svg" },
+    config: { imageUrl: `${REF}/santa-teresinha.webp` },
   },
-  {
-    key: "reviews",
-    type: "reviews",
-    label: "Prova social (depoimentos reais)",
-    title: "O que as artesãs estão dizendo",
-    subtitle: "",
-  },
+  { key: "reviews", type: "reviews", label: "Prova social (depoimentos reais)", title: "O que as artesãs estão dizendo", subtitle: "" },
   {
     key: "autora",
     type: "product_in_use",
@@ -180,8 +179,9 @@ export const LP_SECTIONS: LpSection[] = [
     key: "garantia",
     type: "product_in_use",
     label: "Garantia",
-    title: "Sem risco pra você",
-    body: "Você tem 7 dias de garantia. Se abrir e sentir que não é pra você, é só mandar uma mensagem que eu devolvo o valor integral. Simples assim.",
+    title: "Faça a primeira santinha. Se não for pra você, o dinheiro volta.",
+    body: "Você tem 7 dias para abrir o material, ler os gráficos e começar a sua primeira peça com calma. Se sentir que não é pra você, responde o e-mail da compra e devolve o valor integral — sem formulário, sem pergunta, sem letra miúda. O risco é todo meu: você só continua se gostar.",
+    config: {},
   },
   { key: "faq", type: "faq", label: "FAQ", title: "Perguntas frequentes" },
   {
@@ -192,6 +192,7 @@ export const LP_SECTIONS: LpSection[] = [
     subtitle: "Na sua mão, no seu cantinho de oração, ou no colo de quem você ama. Começa por ela hoje.",
     ctaLabel: "Escolher meu pacote",
     ctaTarget: "#oferta",
+    config: { image: `${REF}/checkout-santas.webp` },
   },
 ];
 
@@ -201,12 +202,10 @@ export const LP_FAQ: { question: string; answer: string }[] = [
   { question: "Leio gráfico devagar, dou conta?", answer: "Dá. O material explica a legenda e vai peça por peça. No Completo ainda tem a receita escrita carreira por carreira." },
   { question: "Como recebo?", answer: "É digital. Assim que o PIX confirma, o acesso cai no seu e-mail (celular, tablet ou computador). Nada é enviado pelo correio." },
   { question: "Posso vender as peças que eu fizer?", answer: "Pode. Os gráficos são pra você fazer e vender as suas peças. Só não pode revender o PDF." },
-  { question: "E se não for pra mim?", answer: "7 dias de garantia, devolvo o valor." },
+  { question: "E se não for pra mim?", answer: "7 dias de garantia, devolvo o valor integral." },
 ];
 
 // ───────────── Catálogo: 2 pacotes + 3 order bumps + upsell ─────────────
-// priceCents = preço real cobrado (já com o desconto). compareAtPriceCents = âncora (2×) para a roleta "revelar" 50%.
-
 export const LP_PACKAGES = [
   {
     slug: "pacote-basico",
@@ -249,7 +248,6 @@ export const LP_PACKAGES = [
   },
 ];
 
-// Produtos dos bumps/upsell (ativos para o checkout cotar; a LP não lista catálogo).
 export const LP_BUMP_PRODUCTS = [
   { slug: "bump-livro-completo", sku: "FC-BUMP-LIVRO", name: "Livro de receitas completas + 3 bônus", priceCents: 700, shortDescription: "Livro de 150 páginas (carreira por carreira), lista de materiais e 3 bônus." },
   { slug: "bump-arcanjos", sku: "FC-BUMP-ARCANJOS", name: "3 arcanjos de crochê", priceCents: 790, shortDescription: "Receitas de São Gabriel, São Miguel e São Rafael, com materiais e montagem." },
@@ -257,59 +255,12 @@ export const LP_BUMP_PRODUCTS = [
 ];
 
 export const LP_BUMPS = [
-  {
-    name: "Livro de receitas completas + 3 bônus",
-    productSlug: "bump-livro-completo",
-    title: "Leve o livro de receitas completas, com lista de material + 3 bônus",
-    description: "150 páginas, cada santa escrita carreira por carreira, lista de materiais e os 3 bônus (livrinho, cartões e marca-página).",
-    benefit: "Por R$ 7,00",
-    imageUrl: "/img/bump-livro-completo.svg",
-    priceCents: 700,
-    sortOrder: 1,
-    // Só faz sentido para quem leva o Básico (o Completo já inclui)
-    triggerSlugs: ["pacote-basico"],
-  },
-  {
-    name: "3 arcanjos de crochê",
-    productSlug: "bump-arcanjos",
-    title: "Leve também a receita dos 3 arcanjos de crochê",
-    description: "São Gabriel, São Miguel e São Rafael, com os materiais e a ordem de montagem.",
-    benefit: "Por R$ 7,90",
-    imageUrl: "/img/bump-arcanjos.svg",
-    priceCents: 790,
-    sortOrder: 2,
-    triggerSlugs: ["pacote-basico", "pacote-completo"],
-  },
-  {
-    name: "Presépio de Natal em crochê",
-    productSlug: "bump-presepio",
-    title: "Leve o Presépio de Natal em crochê",
-    description: "O presépio completo com 13 peças: Maria, José, Menino Jesus, o anjo, os pastores, os 3 Reis Magos e a Estrela de Belém.",
-    benefit: "Por R$ 11,90",
-    imageUrl: "/img/bump-presepio.svg",
-    priceCents: 1190,
-    sortOrder: 3,
-    triggerSlugs: ["pacote-basico", "pacote-completo"],
-  },
+  { name: "Livro de receitas completas + 3 bônus", productSlug: "bump-livro-completo", title: "Leve o livro de receitas completas, com lista de material + 3 bônus", description: "150 páginas, cada santa escrita carreira por carreira, lista de materiais e os 3 bônus (livrinho, cartões e marca-página).", benefit: "Por R$ 7,00", imageUrl: "/img/bump-livro-completo.svg", priceCents: 700, sortOrder: 1, triggerSlugs: ["pacote-basico"] },
+  { name: "3 arcanjos de crochê", productSlug: "bump-arcanjos", title: "Leve também a receita dos 3 arcanjos de crochê", description: "São Gabriel, São Miguel e São Rafael, com os materiais e a ordem de montagem.", benefit: "Por R$ 7,90", imageUrl: "/img/bump-arcanjos.svg", priceCents: 790, sortOrder: 2, triggerSlugs: ["pacote-basico", "pacote-completo"] },
+  { name: "Presépio de Natal em crochê", productSlug: "bump-presepio", title: "Leve o Presépio de Natal em crochê", description: "O presépio completo com 13 peças: Maria, José, Menino Jesus, o anjo, os pastores, os 3 Reis Magos e a Estrela de Belém.", benefit: "Por R$ 11,90", imageUrl: "/img/bump-presepio.svg", priceCents: 1190, sortOrder: 3, triggerSlugs: ["pacote-basico", "pacote-completo"] },
 ];
 
-export const LP_UPSELL_PRODUCT = {
-  slug: "upsell-calendario",
-  sku: "FC-UP-CALENDARIO",
-  name: "Calendário do Crochê Devocional",
-  priceCents: 2700,
-  shortDescription: "Uma peça nova por mês, o ano inteiro.",
-};
+export const LP_UPSELL_PRODUCT = { slug: "upsell-calendario", sku: "FC-UP-CALENDARIO", name: "Calendário do Crochê Devocional", priceCents: 2700, shortDescription: "Uma peça nova por mês, o ano inteiro." };
+export const LP_UPSELL = { name: "Calendário do Crochê Devocional", productSlug: "upsell-calendario", headline: "Já que você começou, leve o ano inteiro", title: "Calendário do Crochê Devocional: uma peça nova por mês", description: "A cada mês, um gráfico novo de uma santinha ou peça devocional pra você fazer, presentear e vender. O ano todo com ideia na mão.", priceCents: 2700, sortOrder: 1 };
 
-export const LP_UPSELL = {
-  name: "Calendário do Crochê Devocional",
-  productSlug: "upsell-calendario",
-  headline: "Já que você começou, leve o ano inteiro",
-  title: "Calendário do Crochê Devocional: uma peça nova por mês",
-  description: "A cada mês, um gráfico novo de uma santinha ou peça devocional pra você fazer, presentear e vender. O ano todo com ideia na mão.",
-  priceCents: 2700,
-  sortOrder: 1,
-};
-
-// Desconto da roleta (sempre 50%). A roleta "revela" e os preços exibidos caem do âncora para o real.
 export const WHEEL_DISCOUNT_PERCENT = 50;

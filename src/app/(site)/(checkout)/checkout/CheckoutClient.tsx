@@ -7,7 +7,6 @@ import { useEffect, useRef, useState } from "react";
 import { useCart } from "@/components/cart/CartProvider";
 import { QtyStepper } from "@/components/cart/CartDrawer";
 import { ProductVisual } from "@/components/ui/ProductVisual";
-import { LedBoard } from "@/components/ui/LedBoard";
 import { PixelIcon } from "@/components/ui/PixelArt";
 import { gaEvent, getClientContext, metaEvent, newEventId, randomId, track, trackOnce } from "@/lib/client/tracking";
 import { formatBRL } from "@/utils/format";
@@ -498,43 +497,48 @@ export function CheckoutClient({ requireCpf, checkoutNote, shippingNote, consent
           </section>
         )}
 
-        {/* Order bumps — opcionais, desmarcados por padrão */}
+        {/* Order bumps — opcionais, desmarcados por padrão (estilo cartão com imagem) */}
         {q.bumps.length > 0 && (
-          <section className="space-y-3" aria-labelledby="h-extras">
-            <h2 id="h-extras" className="px-1 text-lg font-extrabold">Quer aproveitar? <span className="text-sm font-semibold text-muted">(opcional)</span></h2>
+          <section className="space-y-4" aria-labelledby="h-extras">
+            <div className="flex items-center gap-3">
+              <span className="h-px flex-1 bg-line" />
+              <h2 id="h-extras" className="text-sm font-bold uppercase tracking-[0.12em] text-muted">Aproveite e leve junto</h2>
+              <span className="h-px flex-1 bg-line" />
+            </div>
             {q.bumps.filter((b, i) => showAllBumps || i < 2 || cart.bumpIds.includes(b.id)).map((b) => {
               const selected = cart.bumpIds.includes(b.id);
               return (
-              <label key={b.id} className={`flex cursor-pointer gap-3 rounded-card border-2 border-dashed p-4 transition ${selected ? "border-success bg-success/[0.06]" : "border-accent/60 bg-surface"}`}>
-                <input
-                  type="checkbox"
-                  checked={selected}
-                  onChange={(e) => {
-                    cart.toggleBump(b.id, e.target.checked);
-                    track(e.target.checked ? "order_bump_accept" : "order_bump_reject", { productId: b.productId, element: `bump_${b.id}`, valueCents: b.priceCents, props: { bumpId: b.id } });
-                  }}
-                  className="mt-1 h-6 w-6 shrink-0 accent-[rgb(var(--c-success))]"
-                  data-cta={`order_bump_${b.id}`}
-                />
-                {(b.imageUrl || /led/i.test(b.productName)) && (
-                  <span className="relative block h-16 w-16 shrink-0 overflow-hidden rounded-xl">
-                    {b.imageUrl ? <Image src={b.imageUrl} alt={b.productName} fill sizes="64px" className="object-cover" /> : <LedBoard className="h-full w-full" sprite="star" label={false} sizes="64px" />}
-                  </span>
-                )}
-                <span className="min-w-0 flex-1">
-                  {b.discountPct ? <span className="mb-1 inline-block rounded-md bg-accent px-1.5 py-0.5 text-[11px] font-extrabold text-white">-{b.discountPct}% só neste pedido</span> : null}
-                  <span className="flex flex-wrap items-baseline justify-between gap-x-3">
-                    <span className="font-extrabold">{b.title}</span>
-                    <span className="font-extrabold tabular-nums text-accent">
-                      + {formatBRL(b.priceCents)}
-                      {b.listPriceCents && <s className="ml-1 text-xs font-semibold text-muted">{formatBRL(b.listPriceCents)}</s>}
-                    </span>
-                  </span>
-                  {b.description && <span className="mt-1 block text-sm text-muted">{b.description}</span>}
-                  {b.benefit && <span className="mt-1 block text-sm font-semibold text-success">{b.benefit}</span>}
-                  {selected && <span className="mt-2 block animate-pop text-sm font-bold text-success">✓ Adicionado ao pedido</span>}
-                </span>
-              </label>
+                <label key={b.id} className={`block cursor-pointer overflow-hidden rounded-card border transition ${selected ? "border-success shadow-soft" : "border-line bg-surface"}`}>
+                  <div className="bg-secondary/15 px-4 py-2 text-center text-[11px] font-bold uppercase tracking-[0.1em] text-ink">Oferta especial · só neste pedido</div>
+                  {b.imageUrl && (
+                    <div className="relative aspect-[16/9] w-full bg-bg">
+                      <Image src={b.imageUrl} alt={b.productName} fill sizes="(min-width:640px) 600px, 100vw" className="object-cover" />
+                    </div>
+                  )}
+                  <div className="p-4">
+                    <p className="font-extrabold leading-snug">{b.title}</p>
+                    {b.description && <p className="mt-1.5 text-sm leading-relaxed text-muted">{b.description}</p>}
+                    <p className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                      {b.listPriceCents && <s className="text-sm font-semibold text-muted">{formatBRL(b.listPriceCents)}</s>}
+                      <span className="text-2xl font-extrabold tabular-nums text-primary">+ {formatBRL(b.priceCents)}</span>
+                      {b.discountPct ? <span className="rounded-md bg-success/15 px-1.5 py-0.5 text-[11px] font-bold text-success">-{b.discountPct}%</span> : null}
+                      <span className="text-xs text-muted">pagamento único</span>
+                    </p>
+                  </div>
+                  <div className={`flex items-center gap-2.5 border-t px-4 py-3.5 text-sm font-bold transition ${selected ? "border-success bg-success/10 text-success" : "border-line bg-bg text-ink"}`}>
+                    <input
+                      type="checkbox"
+                      checked={selected}
+                      onChange={(e) => {
+                        cart.toggleBump(b.id, e.target.checked);
+                        track(e.target.checked ? "order_bump_accept" : "order_bump_reject", { productId: b.productId, element: `bump_${b.id}`, valueCents: b.priceCents, props: { bumpId: b.id } });
+                      }}
+                      className="h-5 w-5 shrink-0 accent-[rgb(var(--c-success))]"
+                      data-cta={`order_bump_${b.id}`}
+                    />
+                    {selected ? "Adicionado ao seu pedido" : "Sim! Quero adicionar ao meu pedido"}
+                  </div>
+                </label>
               );
             })}
             {!showAllBumps && q.bumps.filter((b, i) => i >= 2 && !cart.bumpIds.includes(b.id)).length > 0 && (

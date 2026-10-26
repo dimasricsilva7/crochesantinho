@@ -38,12 +38,20 @@ export const SANTA_CARDS: SaintCard[] = [
   { n: 10, name: "Santa Rita", title: "A santa das causas impossíveis", attrs: "Hábito preto, touca branca, buquê de rosas, crucifixo, rosário", img: `${REF}/santa-rita-m.webp` },
 ];
 
-// 10 santos — imagens e atributos ainda não existem (o site de referência não vende santos).
-// Placeholder por enquanto; dono adiciona foto por link e os detalhes no admin. // TODO: imagens/atributos reais
+// 10 santos. 5 têm foto real (recortada do banner de santos do site de referência: Pedro, Antônio,
+// José, Jorge, Bento). Os outros 5 ficam com placeholder até o dono fornecer/gerar a imagem. // TODO
 export const SANTO_CARDS: SaintCard[] = [
-  "São José", "Santo Antônio", "São Francisco", "São Jorge", "São Pedro",
-  "São Paulo", "São Bento", "São Sebastião", "São João Batista", "São Judas Tadeu",
-].map((name, i) => ({ n: i + 1, name, title: "", attrs: "", img: "/img/santo-placeholder.svg" }));
+  { n: 1, name: "São José", title: "O pai adotivo de Jesus", attrs: "Lírios, esquadro de carpinteiro, manto verde e túnica branca", img: "/img/santo-jose.webp" },
+  { n: 2, name: "Santo Antônio", title: "O santo casamenteiro", attrs: "Menino Jesus no colo, lírios, hábito marrom e terço", img: "/img/santo-antonio.webp" },
+  { n: 3, name: "São Francisco", title: "O santo dos animais", attrs: "", img: "/img/santo-placeholder.svg" },
+  { n: 4, name: "São Jorge", title: "O santo guerreiro", attrs: "Armadura, capa vermelha, lança e escudo com a cruz", img: "/img/santo-jorge.webp" },
+  { n: 5, name: "São Pedro", title: "O guardião das chaves", attrs: "As chaves do céu, livro, manto azul e branco", img: "/img/santo-pedro.webp" },
+  { n: 6, name: "São Paulo", title: "O apóstolo das nações", attrs: "", img: "/img/santo-placeholder.svg" },
+  { n: 7, name: "São Bento", title: "O protetor contra o mal", attrs: "Hábito preto, livro da regra, cruz de São Bento", img: "/img/santo-bento.webp" },
+  { n: 8, name: "São Sebastião", title: "", attrs: "", img: "/img/santo-placeholder.svg" },
+  { n: 9, name: "São João Batista", title: "", attrs: "", img: "/img/santo-placeholder.svg" },
+  { n: 10, name: "São Judas Tadeu", title: "", attrs: "", img: "/img/santo-placeholder.svg" },
+];
 
 export const LP_SANTAS = SANTA_CARDS.map((s) => s.name);
 export const LP_SANTOS = SANTO_CARDS.map((s) => s.name);
@@ -248,16 +256,17 @@ export const LP_PACKAGES = [
   },
 ];
 
+// priceCents do PRODUTO do bump = âncora (2× a oferta) → o checkout mostra "de R$X" riscado + "-50%".
 export const LP_BUMP_PRODUCTS = [
-  { slug: "bump-livro-completo", sku: "FC-BUMP-LIVRO", name: "Livro de receitas completas + 3 bônus", priceCents: 700, shortDescription: "Livro de 150 páginas (carreira por carreira), lista de materiais e 3 bônus." },
-  { slug: "bump-arcanjos", sku: "FC-BUMP-ARCANJOS", name: "3 arcanjos de crochê", priceCents: 790, shortDescription: "Receitas de São Gabriel, São Miguel e São Rafael, com materiais e montagem." },
-  { slug: "bump-presepio", sku: "FC-BUMP-PRESEPIO", name: "Presépio de Natal em crochê", priceCents: 1190, shortDescription: "Presépio completo com 13 peças (Maria, José, Menino Jesus, Reis Magos e mais)." },
+  { slug: "bump-livro-completo", sku: "FC-BUMP-LIVRO", name: "Livro de receitas completas + 3 bônus", priceCents: 1400, shortDescription: "Livro de 150 páginas (carreira por carreira), lista de materiais e 3 bônus." },
+  { slug: "bump-arcanjos", sku: "FC-BUMP-ARCANJOS", name: "3 arcanjos de crochê", priceCents: 1580, shortDescription: "Receitas de São Gabriel, São Miguel e São Rafael, com materiais e montagem." },
+  { slug: "bump-presepio", sku: "FC-BUMP-PRESEPIO", name: "Presépio de Natal em crochê", priceCents: 2380, shortDescription: "Presépio completo com 13 peças (Maria, José, Menino Jesus, Reis Magos e mais)." },
 ];
 
 export const LP_BUMPS = [
-  { name: "Livro de receitas completas + 3 bônus", productSlug: "bump-livro-completo", title: "Leve o livro de receitas completas, com lista de material + 3 bônus", description: "150 páginas, cada santa escrita carreira por carreira, lista de materiais e os 3 bônus (livrinho, cartões e marca-página).", benefit: "Por R$ 7,00", imageUrl: "/img/bump-livro-completo.svg", priceCents: 700, sortOrder: 1, triggerSlugs: ["pacote-basico"] },
-  { name: "3 arcanjos de crochê", productSlug: "bump-arcanjos", title: "Leve também a receita dos 3 arcanjos de crochê", description: "São Gabriel, São Miguel e São Rafael, com os materiais e a ordem de montagem.", benefit: "Por R$ 7,90", imageUrl: "/img/bump-arcanjos.svg", priceCents: 790, sortOrder: 2, triggerSlugs: ["pacote-basico", "pacote-completo"] },
-  { name: "Presépio de Natal em crochê", productSlug: "bump-presepio", title: "Leve o Presépio de Natal em crochê", description: "O presépio completo com 13 peças: Maria, José, Menino Jesus, o anjo, os pastores, os 3 Reis Magos e a Estrela de Belém.", benefit: "Por R$ 11,90", imageUrl: "/img/bump-presepio.svg", priceCents: 1190, sortOrder: 3, triggerSlugs: ["pacote-basico", "pacote-completo"] },
+  { name: "Livro de receitas completas + 3 bônus", productSlug: "bump-livro-completo", title: "Leve o livro de receitas completas, com lista de material + 3 bônus", description: "150 páginas, cada santa escrita carreira por carreira, lista de materiais e os 3 bônus (livrinho, cartões e marca-página).", benefit: "Por R$ 7,00", imageUrl: "/img/livro-carreiras.webp", priceCents: 700, sortOrder: 1, triggerSlugs: ["pacote-basico"] },
+  { name: "3 arcanjos de crochê", productSlug: "bump-arcanjos", title: "Leve também a receita dos 3 arcanjos de crochê", description: "Gabriel com os lírios e a trombeta, Miguel com a espada e o escudo, Rafael com o cajado e o peixe. Todos com asas, auréola e manto, no mesmo estilo das santinhas.", benefit: "Por R$ 7,90", imageUrl: "/img/bump-arcanjos.webp", priceCents: 790, sortOrder: 2, triggerSlugs: ["pacote-basico", "pacote-completo"] },
+  { name: "Presépio de Natal em crochê", productSlug: "bump-presepio", title: "Leve o Presépio de Natal em crochê", description: "O presépio completo com 13 peças: Maria, José, Menino Jesus, o anjo, os pastores, os 3 Reis Magos e a Estrela de Belém.", benefit: "Por R$ 11,90", imageUrl: "/img/bump-presepio.webp", priceCents: 1190, sortOrder: 3, triggerSlugs: ["pacote-basico", "pacote-completo"] },
 ];
 
 export const LP_UPSELL_PRODUCT = { slug: "upsell-calendario", sku: "FC-UP-CALENDARIO", name: "Calendário do Crochê Devocional", priceCents: 2700, shortDescription: "Uma peça nova por mês, o ano inteiro." };

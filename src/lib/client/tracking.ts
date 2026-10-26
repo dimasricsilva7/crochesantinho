@@ -224,9 +224,25 @@ export function gaEvent(name: string, params: Record<string, unknown> = {}) {
 
 // ───────────── Online agora (batimento) ─────────────
 if (typeof window !== "undefined" && !location.pathname.startsWith("/admin")) {
+  // Seção (área) da landing atualmente em vista — para o admin ver "em qual área" o visitante está.
+  const currentSection = (): string => {
+    const line = window.innerHeight * 0.35; // ponto de referência no terço superior
+    let best = "";
+    let bestTop = -Infinity;
+    for (const el of Array.from(document.querySelectorAll<HTMLElement>("section[id]"))) {
+      const r = el.getBoundingClientRect();
+      if (r.top <= line && r.top > bestTop) {
+        bestTop = r.top;
+        best = el.id;
+      }
+    }
+    return best;
+  };
   const ping = () => {
     if (document.visibilityState !== "visible") return;
-    const body = JSON.stringify({ sid: getClientContext().sessionId, path: location.pathname });
+    const section = location.pathname === "/" ? currentSection() : "";
+    const path = location.pathname + (section ? `#${section}` : "");
+    const body = JSON.stringify({ sid: getClientContext().sessionId, path });
     const blob = new Blob([body], { type: "application/json" });
     if (!(navigator.sendBeacon && navigator.sendBeacon("/api/ping", blob))) fetch("/api/ping", { method: "POST", body, headers: { "Content-Type": "application/json" }, keepalive: true }).catch(() => {});
   };

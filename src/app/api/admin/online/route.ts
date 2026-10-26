@@ -6,9 +6,27 @@ export const dynamic = "force-dynamic";
 
 const WINDOW_MS = 15_000; // batimento a cada ~7 s → online = visto nos últimos 15 s
 
+const SECTION_LABEL: Record<string, string> = {
+  inicio: "Topo (hero)",
+  dor: "Seção: a dor",
+  conteudo: "O que você recebe",
+  pecas: "Folha das peças",
+  livro: "Livro 150 páginas",
+  destino: "Para quem fazer",
+  colecao: "A coleção",
+  diferencial: "Diferencial",
+  depoimentos: "Depoimentos",
+  autora: "Autora",
+  oferta: "Preços / Oferta",
+  garantia: "Garantia",
+  faq: "Dúvidas (FAQ)",
+  fechamento: "Fechamento",
+};
+
 function pageLabel(raw: string | null, method?: string) {
-  const path = raw?.split("?")[0] ?? null;
-  if (!path || path === "/") return "Página inicial";
+  const noQuery = raw?.split("?")[0] ?? null;
+  const [path, hash] = (noQuery ?? "").split("#");
+  if (!path || path === "/") return hash && SECTION_LABEL[hash] ? `Início · ${SECTION_LABEL[hash]}` : "Página inicial";
   if (path.startsWith("/checkout")) return "Checkout";
   if (path.startsWith("/pedido")) return method === "CREDIARIO" ? "Página do pedido (Crediário)" : method === "PIX" ? "Página do pedido (PIX)" : "Página do pedido";
   if (path.startsWith("/produto")) return "Página de produto";

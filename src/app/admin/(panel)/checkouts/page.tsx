@@ -51,7 +51,7 @@ export default async function CheckoutsPage({ searchParams }: { searchParams: SP
   ]);
   const abandonedValue = await db.checkoutLead.aggregate({ where: { ...base, orderId: null }, _sum: { totalCents: true } });
   const qs = (extra: Record<string, string>) => new URLSearchParams({ ...(Object.fromEntries(Object.entries(sp).filter(([, v]) => typeof v === "string")) as Record<string, string>), ...extra }).toString();
-  const store = settings.store_name || "Hama Beads";
+  const store = settings.store_name || "Fé em Crochê";
 
   return (
     <div>

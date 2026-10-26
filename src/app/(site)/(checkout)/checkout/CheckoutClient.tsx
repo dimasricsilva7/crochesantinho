@@ -111,7 +111,7 @@ function Summary({ q, compact = false }: { q: CartQuote; compact?: boolean }) {
   );
 }
 
-export function CheckoutClient({ requireCpf, checkoutNote, shippingNote, consentLabel, pix, crediario, cnpj, companyName, reservationMinutes }: { requireCpf: boolean; checkoutNote: string | null; shippingNote: string | null; consentLabel: string; pix: PixOption; crediario: CrediarioConfig; cnpj: string | null; companyName: string | null; reservationMinutes: number }) {
+export function CheckoutClient({ requireCpf, checkoutNote, shippingNote, consentLabel, pix, crediario, cnpj, companyName, supportEmail, reservationMinutes }: { requireCpf: boolean; checkoutNote: string | null; shippingNote: string | null; consentLabel: string; pix: PixOption; crediario: CrediarioConfig; cnpj: string | null; companyName: string | null; supportEmail: string | null; reservationMinutes: number }) {
   const cart = useCart();
   const router = useRouter();
   const q = cart.quote;
@@ -407,7 +407,7 @@ export function CheckoutClient({ requireCpf, checkoutNote, shippingNote, consent
     <form onSubmit={submit} noValidate className="container-page grid gap-6 py-4 sm:py-6 lg:grid-cols-[1fr_380px] lg:items-start lg:gap-10">
       <div className="space-y-5">
         <h1 className="font-display text-3xl font-extrabold sm:text-4xl">Finalizar compra</h1>
-        <TrustSeals freeShipping={q.shippingCents === 0} cnpj={cnpj} companyName={companyName} />
+        <TrustSeals cnpj={cnpj} companyName={companyName} supportEmail={supportEmail} />
 
         {/* Resumo imediato (mobile) */}
         <section className="card p-4 lg:hidden">
@@ -658,7 +658,7 @@ export function CheckoutClient({ requireCpf, checkoutNote, shippingNote, consent
             Ao continuar, você concorda com os <Link href="/termos" className="underline">Termos</Link> e a <Link href="/politica-de-privacidade" className="underline">Política de Privacidade</Link>.
           </p>
         </div>
-        <div className="mt-3"><TrustSeals freeShipping={q.shippingCents === 0} cnpj={cnpj} companyName={companyName} /></div>
+        <div className="mt-3"><TrustSeals cnpj={cnpj} companyName={companyName} supportEmail={supportEmail} /></div>
       </aside>
     </form>
     </>

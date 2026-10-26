@@ -1,68 +1,61 @@
 /**
- * Seed idempotente da "Fé em Crochê — Coleção Santinhas": cria o que não existe e NUNCA
- * sobrescreve edições do admin. Toda a copy vem de src/content/lp.ts (fonte única).
+ * Seed idempotente da "Fé em Crochê — Santinhas de Crochê".
+ * Cria o que não existe e NUNCA sobrescreve edições do admin. Copy em src/content/lp.ts.
  *
- * Regra do projeto: nada comercial é inventado. Depoimentos e número de artesãs ficam como
- * // TODO no código/placeholders; a história da autora nasce com texto [A SER PREENCHIDO].
+ * Reset de catálogo (quando o modelo muda): rode uma vez `npm run db:seed -- --reset-catalog`
+ * para recriar produtos/bumps/upsell/seções/faq com o modelo novo.
  */
 import "dotenv/config";
 import { PrismaClient, type Prisma } from "@prisma/client";
-import { LP_SECTIONS, LP_FAQ, LP_PRODUCT, LP_BUMP_PRODUCTS, LP_BUMPS, LP_UPSELL_PRODUCT, LP_UPSELL } from "../src/content/lp";
+import { LP_SECTIONS, LP_FAQ, LP_PACKAGES, LP_BUMP_PRODUCTS, LP_BUMPS, LP_UPSELL_PRODUCT, LP_UPSELL } from "../src/content/lp";
 
 const db = new PrismaClient();
-
-type Comp = { type: string; label: string; quantity?: string; detail?: string; isBonus?: boolean };
-const comps = (list: Comp[]) => list.map((c, i) => ({ id: `c${i + 1}`, quantity: null, detail: null, imageUrl: null, isBonus: false, ...c }));
+const RESET = process.argv.includes("--reset-catalog");
 
 async function main() {
-  // ───────────── Produtos ─────────────
   const bySlug: Record<string, string> = {};
 
-  const mainProduct = await db.product.upsert({
-    where: { slug: LP_PRODUCT.slug },
-    update: {},
-    create: {
-      slug: LP_PRODUCT.slug,
-      sku: LP_PRODUCT.sku,
-      name: LP_PRODUCT.name,
-      category: "DIGITAL_MODELS",
-      fulfillment: "DIGITAL",
-      shortDescription: LP_PRODUCT.shortDescription,
-      description: LP_PRODUCT.description,
-      priceCents: LP_PRODUCT.priceCents,
-      digitalDeliveryNote: LP_PRODUCT.digitalDeliveryNote,
-      components: comps(LP_PRODUCT.components as Comp[]),
-      featured: true,
-      sortOrder: 1,
-      seoTitle: "Coleção Santinhas em Crochê — gráficos em PDF",
-      seoDescription: LP_PRODUCT.shortDescription,
-    } satisfies Prisma.ProductCreateInput,
-  });
-  bySlug[LP_PRODUCT.slug] = mainProduct.id;
+  // ───────────── Produtos: 2 pacotes + bumps + upsell ─────────────
+  const packageProducts: Prisma.ProductCreateInput[] = LP_PACKAGES.map((p, i) => ({
+    slug: p.slug,
+    sku: p.sku,
+    name: p.name,
+    category: "DIGITAL_MODELS",
+    fulfillment: "DIGITAL",
+    shortDescription: p.shortDescription,
+    priceCents: p.priceCents,
+    compareAtPriceCents: p.compareAtCents,
+    featured: Boolean((p as { featured?: boolean }).featured),
+    active: true,
+    sortOrder: i + 1,
+    seoTitle: `${p.name} — Santinhas de Crochê`,
+    seoDescription: p.shortDescription,
+  }));
 
-  // Produtos de bump/upsell (ativos para o checkout cotar; a LP não lista catálogo, então não aparecem soltos)
-  const extraProducts = [...LP_BUMP_PRODUCTS, LP_UPSELL_PRODUCT];
-  for (const [i, p] of extraProducts.entries()) {
+  const extraProducts = [
+    ...LP_BUMP_PRODUCTS.map((p, i) => ({ ...p, sortOrder: 10 + i })),
+    { ...LP_UPSELL_PRODUCT, sortOrder: 20 },
+  ];
+
+  for (const p of [...packageProducts]) {
+    const row = await db.product.upsert({
+      where: { slug: p.slug as string },
+      update: RESET ? { priceCents: p.priceCents, compareAtPriceCents: p.compareAtPriceCents, name: p.name, shortDescription: p.shortDescription, active: true, featured: p.featured } : {},
+      create: p,
+    });
+    bySlug[p.slug as string] = row.id;
+  }
+  for (const p of extraProducts) {
     const row = await db.product.upsert({
       where: { slug: p.slug },
-      update: {},
-      create: {
-        slug: p.slug,
-        sku: p.sku,
-        name: p.name,
-        category: "DIGITAL_MODELS",
-        fulfillment: "DIGITAL",
-        shortDescription: p.shortDescription,
-        priceCents: p.priceCents,
-        digitalDeliveryNote: p.digitalDeliveryNote,
-        active: true,
-        sortOrder: 10 + i,
-      },
+      update: RESET ? { priceCents: p.priceCents, name: p.name, active: true } : {},
+      create: { slug: p.slug, sku: p.sku, name: p.name, category: "DIGITAL_MODELS", fulfillment: "DIGITAL", shortDescription: p.shortDescription, priceCents: p.priceCents, active: true, sortOrder: p.sortOrder },
     });
     bySlug[p.slug] = row.id;
   }
 
-  // ───────────── Order bumps (checkout) ─────────────
+  // ───────────── Order bumps ─────────────
+  if (RESET) await db.orderBump.deleteMany();
   if ((await db.orderBump.count()) === 0) {
     await db.orderBump.createMany({
       data: LP_BUMPS.map((b) => ({
@@ -71,15 +64,17 @@ async function main() {
         title: b.title,
         description: b.description,
         benefit: b.benefit,
+        imageUrl: b.imageUrl,
         priceCents: b.priceCents,
         sortOrder: b.sortOrder,
         active: true,
-        triggerProductIds: [bySlug[LP_PRODUCT.slug]],
+        triggerProductIds: b.triggerSlugs.map((s) => bySlug[s]).filter(Boolean),
       })),
     });
   }
 
-  // ───────────── Upsell (pós-pagamento, 1 clique) ─────────────
+  // ───────────── Upsell (pós-pagamento) ─────────────
+  if (RESET) await db.upsell.deleteMany();
   if ((await db.upsell.count()) === 0) {
     await db.upsell.create({
       data: {
@@ -91,52 +86,47 @@ async function main() {
         priceCents: LP_UPSELL.priceCents,
         sortOrder: LP_UPSELL.sortOrder,
         active: true,
-        triggerProductIds: [bySlug[LP_PRODUCT.slug]],
+        triggerProductIds: [bySlug["pacote-basico"], bySlug["pacote-completo"]].filter(Boolean),
       },
     });
   }
 
   // ───────────── Landing page (CMS) ─────────────
+  if (RESET) await db.landingSection.deleteMany();
   for (const [i, s] of LP_SECTIONS.entries()) {
-    const config = s.key === "oferta" ? { ...(s.config ?? {}), productId: bySlug[LP_PRODUCT.slug] } : s.config ?? {};
-    await db.landingSection.upsert({
-      where: { key: s.key },
-      update: {},
-      create: {
-        key: s.key,
-        type: s.type,
-        label: s.label,
-        title: s.title ?? null,
-        subtitle: s.subtitle ?? null,
-        body: s.body ?? null,
-        imageUrl: (s.config?.imageUrl as string) ?? null,
-        ctaLabel: s.ctaLabel ?? null,
-        ctaTarget: s.ctaTarget ?? null,
-        config: config as Prisma.InputJsonValue,
-        sortOrder: i + 1,
-        active: true,
-      },
-    });
+    const data = {
+      type: s.type,
+      label: s.label,
+      title: s.title ?? null,
+      subtitle: s.subtitle ?? null,
+      body: s.body ?? null,
+      imageUrl: ((s.config?.imageUrl as string) || (s.config?.image as string)) ?? null,
+      ctaLabel: s.ctaLabel ?? null,
+      ctaTarget: s.ctaTarget ?? null,
+      config: (s.config ?? {}) as Prisma.InputJsonValue,
+      sortOrder: i + 1,
+      active: true,
+    };
+    await db.landingSection.upsert({ where: { key: s.key }, update: RESET ? data : {}, create: { key: s.key, ...data } });
   }
 
   // ───────────── FAQ ─────────────
+  if (RESET) await db.faq.deleteMany();
   if ((await db.faq.count()) === 0) {
-    await db.faq.createMany({
-      data: LP_FAQ.map((f, i) => ({ question: f.question, answer: f.answer, active: true, sortOrder: i + 1 })),
-    });
+    await db.faq.createMany({ data: LP_FAQ.map((f, i) => ({ question: f.question, answer: f.answer, active: true, sortOrder: i + 1 })) });
   }
 
-  // ───────────── Modelos de mensagem (recuperação manual) ─────────────
+  // ───────────── Modelos de mensagem ─────────────
   if ((await db.messageTemplate.count()) === 0) {
     await db.messageTemplate.createMany({
       data: [
-        { channel: "WHATSAPP", name: "PIX pendente", body: "Oi, {primeiro_nome}! Aqui é da {loja}. Vi que o PIX da sua Coleção Santinhas ({valor}) ainda está pendente. Pra concluir e já receber o acesso, é só acessar: {link}. Qualquer dúvida, estou por aqui!" },
+        { channel: "WHATSAPP", name: "PIX pendente", body: "Oi, {primeiro_nome}! Aqui é da {loja}. Vi que o PIX das suas receitas ({valor}) ainda está pendente. Pra concluir e já receber o acesso, é só acessar: {link}. Qualquer dúvida, estou por aqui!" },
         { channel: "EMAIL", name: "PIX pendente", body: "Olá, {primeiro_nome}!\n\nO PIX do seu pedido {pedido} ({valor}) ainda está pendente. Para concluir e receber o acesso, acesse: {link}\n\nEquipe {loja}" },
       ],
     });
   }
 
-  console.log("Seed concluído (Coleção Santinhas).");
+  console.log(`Seed concluído (Santinhas de Crochê)${RESET ? " [reset-catalog]" : ""}.`);
 }
 
 main()

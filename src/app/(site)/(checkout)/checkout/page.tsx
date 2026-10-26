@@ -25,6 +25,7 @@ export default async function CheckoutPage() {
       crediario={crediarioConfig(s)}
       cnpj={s.company_document || null}
       companyName={s.company_name || null}
+      supportEmail={s.contact_email || null}
       reservationMinutes={Number.parseInt(s.checkout_reservation_minutes || "15", 10) || 0}
     />
   );

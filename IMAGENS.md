@@ -40,3 +40,30 @@ Mostra uma página do e-book de gráficos num celular/tablet (a LP já monta o m
 ## autora — `autora.png` (600×600, redonda)
 Placeholder para a **foto real** da autora. <!-- TODO: dono colocar foto real -->
 Use uma foto real da autora, enquadramento quadrado (a LP recorta em círculo).
+
+---
+
+## Imagens novas (modelo 2 pacotes / seções do site de referência)
+
+## hero-santinhas — `hero-santinhas.png` (800×500, fundo transparente)
+Trio de santinhas de crochê lado a lado, para o topo (fundo azul mariano).
+> three handmade crochet amigurumi saint figurines standing side by side (Our Lady Aparecida in blue, Saint Teresa with roses, a nun saint), neat stitches, transparent/cutout background, warm studio light, product photo
+
+## pecas-folha — `pecas-folha.png` (1000×750)
+Foto de uma página de "folha das peças" (gráficos de crochê de cada parte, com foto e cores).
+> a printed crochet pattern sheet page showing amigurumi diagrams/charts of saint figurine parts (halo, veil, mantle, tunic, bouquet, crucifix, rosary) with small photos and yarn color legend, flat lay, clean
+
+## livro-paginas — `livro-paginas.png` (1000×750)
+Páginas abertas do livro de receitas de 150 páginas (receita escrita carreira por carreira).
+> open pages of a printed crochet recipe book, row-by-row written amigurumi instructions for saint dolls with photos, soft devotional styling, flat lay on wood with yarn and rosary
+
+## colecao-santinhas — `colecao-santinhas.png` (1000×750)
+Várias santinhas de crochê juntas (grupo), para a seção "para quem você vai fazer".
+> group photo of several handmade crochet amigurumi catholic saint figurines together (Our Lady, Saint Joan of Arc in armor, Saint Cecilia with a harp, Saint Therese), soft pink background, warm light, product photo
+
+## Imagens dos order bumps (checkout) — 400×400 cada
+- `bump-livro-completo.png` — open recipe book pages + 3 bonus items (bookmark, cards), product photo, white background
+- `bump-arcanjos.png` — three handmade crochet archangel figurines (Michael, Gabriel, Raphael), white background, product photo
+- `bump-presepio.png` — handmade crochet nativity scene set (Mary, Joseph, baby Jesus, wise men, star), white background, product photo
+
+> Order bumps aparecem no checkout; as imagens ficam em `public/img/bump-*.svg` e são editáveis em Admin → Order bumps (campo de imagem).

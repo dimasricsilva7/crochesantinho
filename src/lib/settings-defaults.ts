@@ -27,9 +27,9 @@ export const SETTING_DEFAULTS: Record<string, string> = {
   theme_background: "#FBF6EE", // creme
   // Layout
   announcement_text: "",
-  header_cta_label: "Quero a coleção",
+  header_cta_label: "Ver pacotes",
   sticky_cta_enabled: "true",
-  sticky_cta_label: "QUERO MINHAS SANTINHAS",
+  sticky_cta_label: "ESCOLHER MEU PACOTE",
   footer_text: "",
   // Checkout
   require_cpf: "true",

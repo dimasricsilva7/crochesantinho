@@ -48,8 +48,8 @@ export default async function SettingsPage({ searchParams }: { searchParams: SP 
               {text("store_tagline", "Frase curta")}
               <MediaInput name="logo_url" label="Logo" defaultValue={s.logo_url} folder="marca" />
               <MediaInput name="favicon_url" label="Favicon" defaultValue={s.favicon_url} folder="marca" />
-              {text("company_name", "Razão social", "[PREENCHER] — exibida no rodapé")}
-              {text("company_document", "CNPJ")}
+              {text("company_name", "Empresa que realiza a cobrança", "Razão social que aparece no checkout como responsável pela cobrança e recebimento. Troque quando mudar o adquirente/gateway.")}
+              {text("company_document", "CNPJ da empresa que cobra", "Mesmo CNPJ do adquirente que recebe os pagamentos.")}
               {text("contact_email", "E-mail de atendimento")}
               {text("contact_phone", "Telefone")}
               {text("whatsapp", "WhatsApp (com DDD)", "Usado nos botões de atendimento", "11912345678")}

@@ -8,7 +8,7 @@
  * Regra: nada é inventado. Depoimentos, autora e atributos dos SANTOS vão como // TODO (preencher).
  */
 
-const REF = "https://ateliedonovelo.online/croche/assets";
+
 
 export type LpSection = {
   key: string;
@@ -26,16 +26,16 @@ export type SaintCard = { n: number; name: string; title: string; attrs: string;
 
 // ───────────── Coleção: 10 santas (com imagens do site de referência, por link) ─────────────
 export const SANTA_CARDS: SaintCard[] = [
-  { n: 1, name: "Nossa Senhora Rainha", title: "Coroa dourada e Sagrado Coração", attrs: "Coroa com pérolas, manto bordado de rosas, coração com chama e raios, terço com medalha", img: `${REF}/santa-rainha-m.webp` },
-  { n: 2, name: "Nossa Senhora Aparecida", title: "A padroeira do Brasil", attrs: "Manto azul-marinho com arabescos, coroa real, gola de pérolas, rosário", img: `${REF}/santa-aparecida-m.webp` },
-  { n: 3, name: "Nossa Senhora das Graças", title: "A da Medalha Milagrosa", attrs: "Manto azul com lírios, faixa azul, medalha, rosário", img: `${REF}/santa-gracas-m.webp` },
-  { n: 4, name: "Nossa Senhora de Fátima", title: "A Senhora do Rosário", attrs: "Véu branco, faixa azul, coroa de flores, painéis com rosas, rosário", img: `${REF}/santa-fatima-m.webp` },
-  { n: 5, name: "Santa Teresinha", title: "A santa das rosas", attrs: "Véu preto e branco, hábito marrom, manto floral, buquê, crucifixo", img: `${REF}/santa-teresinha-m.webp` },
-  { n: 6, name: "Santa Joana d'Arc", title: "Coragem para cumprir a missão", attrs: "Armadura, saia com flor-de-lis, estandarte, espada, cinto e botas", img: `${REF}/santa-joana-m.webp` },
-  { n: 7, name: "Santa Rosa", title: "A coroa de rosas", attrs: "Coroa de rosas, véu creme, manto marrom florido, buquê, terço perolado", img: `${REF}/santa-rosa-m.webp` },
-  { n: 8, name: "Santa Cecília", title: "A padroeira dos músicos", attrs: "Harpa, coroa de rosas, vestido com barrado dourado, manto bordado", img: `${REF}/santa-cecilia-m.webp` },
-  { n: 9, name: "Santa Luzia", title: "A protetora dos olhos", attrs: "Manto vermelho com lírios, lamparina, ramo de palma, cordão com borlas", img: `${REF}/santa-luzia-m.webp` },
-  { n: 10, name: "Santa Rita", title: "A santa das causas impossíveis", attrs: "Hábito preto, touca branca, buquê de rosas, crucifixo, rosário", img: `${REF}/santa-rita-m.webp` },
+  { n: 1, name: "Nossa Senhora Rainha", title: "Coroa dourada e Sagrado Coração", attrs: "Coroa com pérolas, manto bordado de rosas, coração com chama e raios, terço com medalha", img: `/img/santa-rainha-m.webp` },
+  { n: 2, name: "Nossa Senhora Aparecida", title: "A padroeira do Brasil", attrs: "Manto azul-marinho com arabescos, coroa real, gola de pérolas, rosário", img: `/img/santa-aparecida-m.webp` },
+  { n: 3, name: "Nossa Senhora das Graças", title: "A da Medalha Milagrosa", attrs: "Manto azul com lírios, faixa azul, medalha, rosário", img: `/img/santa-gracas-m.webp` },
+  { n: 4, name: "Nossa Senhora de Fátima", title: "A Senhora do Rosário", attrs: "Véu branco, faixa azul, coroa de flores, painéis com rosas, rosário", img: `/img/santa-fatima-m.webp` },
+  { n: 5, name: "Santa Teresinha", title: "A santa das rosas", attrs: "Véu preto e branco, hábito marrom, manto floral, buquê, crucifixo", img: `/img/santa-teresinha-m.webp` },
+  { n: 6, name: "Santa Joana d'Arc", title: "Coragem para cumprir a missão", attrs: "Armadura, saia com flor-de-lis, estandarte, espada, cinto e botas", img: `/img/santa-joana-m.webp` },
+  { n: 7, name: "Santa Rosa", title: "A coroa de rosas", attrs: "Coroa de rosas, véu creme, manto marrom florido, buquê, terço perolado", img: `/img/santa-rosa-m.webp` },
+  { n: 8, name: "Santa Cecília", title: "A padroeira dos músicos", attrs: "Harpa, coroa de rosas, vestido com barrado dourado, manto bordado", img: `/img/santa-cecilia-m.webp` },
+  { n: 9, name: "Santa Luzia", title: "A protetora dos olhos", attrs: "Manto vermelho com lírios, lamparina, ramo de palma, cordão com borlas", img: `/img/santa-luzia-m.webp` },
+  { n: 10, name: "Santa Rita", title: "A santa das causas impossíveis", attrs: "Hábito preto, touca branca, buquê de rosas, crucifixo, rosário", img: `/img/santa-rita-m.webp` },
 ];
 
 // 10 santos. 5 têm foto real (recortada do banner de santos do site de referência: Pedro, Antônio,
@@ -69,7 +69,7 @@ export const LP_SECTIONS: LpSection[] = [
     config: {
       eyebrow: "Santinhas de Crochê · receitas de amigurumi",
       trust: "20 receitas (10 santas + 10 santos) · a partir de R$ 19,90 · PDF no e-mail · 7 dias de garantia",
-      image: `${REF}/checkout-santas.webp`,
+      image: `/img/checkout-santas.webp`,
     },
   },
   {
@@ -78,7 +78,7 @@ export const LP_SECTIONS: LpSection[] = [
     label: "Dor — Já aconteceu com você?",
     title: "Já aconteceu com você?",
     body: "Você senta com a linha na mão, cheia de vontade de fazer uma Nossa Senhora, e vai procurar como faz. Acha mil vídeos, cada um de um jeito, a moça fala rápido e corta justo na hora de montar. Aí você desmancha, refaz, desmancha de novo… e guarda tudo com aquela pontinha de raiva. Não é que você não sabe crochê. É que ninguém nunca te deu o gráfico certo, com cada parte explicada.",
-    config: { imageUrl: `${REF}/santa-aparecida.webp` },
+    config: { imageUrl: `/img/santa-aparecida.webp` },
   },
   {
     key: "video",
@@ -111,7 +111,7 @@ export const LP_SECTIONS: LpSection[] = [
     subtitle: "Exemplo: Santa Teresinha — cada uma das sete peças com a foto de como fica pronta, o gráfico e as cores do fio. Embaixo, a legenda dos pontos.",
     body: "",
     config: {
-      image: `${REF}/receitateresinha.webp`,
+      image: `/img/receitateresinha.webp`,
       pieces: ["Auréola florida", "Véu preto e branco", "Manto com rosas", "Túnica marrom", "Buquê de rosas", "Crucifixo", "Terço dourado", "Legenda dos pontos"],
     },
   },
@@ -123,7 +123,7 @@ export const LP_SECTIONS: LpSection[] = [
     subtitle:
       "No Pacote Completo: o livro de receitas tem 150 páginas. Começa pela base que todas as santinhas usam (corpo, cabeça, braços e cabelo) e depois traz um capítulo para cada santa, com as cores, as roupas, os acessórios e a ordem de montagem.",
     config: {
-      image: `${REF}/pacote-completo.webp`,
+      image: `/img/pacote-completo.webp`,
       items: [
         { icon: "hook", title: "Materiais e linha por cor", text: "Linha, agulha, enchimento e olhos, e quantos gramas de cada cor separar." },
         { icon: "chart", title: "Carreira por carreira", text: "O que fazer em cada carreira e o total de pontos no fim dela." },
@@ -141,7 +141,7 @@ export const LP_SECTIONS: LpSection[] = [
     title: "Cada santinha já nasce com destino certo.",
     subtitle: "",
     config: {
-      image: `${REF}/checkout-santas.webp`,
+      image: `/img/checkout-santas.webp`,
       cards: [
         { label: "Para a neta", quote: "“Vó, essa é a santa do meu nome?”", text: "Rita, Luzia, Cecília, Rosa, Joana, Teresinha: dá para começar pela santa que tem o nome dela." },
         { label: "Para a primeira comunhão ou o batizado", quote: "“Foi a minha madrinha que fez.”", text: "Um presente que fica anos no quarto da criança e tem uma história para contar." },
@@ -164,7 +164,7 @@ export const LP_SECTIONS: LpSection[] = [
     label: "Diferencial",
     title: "Por que aqui é diferente",
     body: 'A maioria vende uma foto bonita e te deixa adivinhar como se chega naquilo. Aqui não. Cada peça vem destrinchada: você vê onde começa, onde aumenta e onde arremata. É quase como ter alguém do seu lado dizendo "agora faz isso".',
-    config: { imageUrl: `${REF}/santa-teresinha.webp` },
+    config: { imageUrl: `/img/santa-teresinha.webp` },
   },
   { key: "reviews", type: "reviews", label: "Prova social (depoimentos reais)", title: "O que as artesãs estão dizendo", subtitle: "" },
   {
@@ -200,7 +200,7 @@ export const LP_SECTIONS: LpSection[] = [
     subtitle: "Na sua mão, no seu cantinho de oração, ou no colo de quem você ama. Começa por ela hoje.",
     ctaLabel: "Escolher meu pacote",
     ctaTarget: "#oferta",
-    config: { image: `${REF}/checkout-santas.webp` },
+    config: { image: `/img/checkout-santas.webp` },
   },
 ];
 

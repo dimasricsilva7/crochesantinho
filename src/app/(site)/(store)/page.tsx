@@ -10,7 +10,7 @@ import { getSettings } from "@/server/settings";
 
 export const dynamic = "force-dynamic";
 
-const REF = "https://ateliedonovelo.online/croche/assets";
+
 const str = (c: Record<string, unknown>, k: string) => (typeof c?.[k] === "string" ? (c[k] as string) : "");
 
 /** Conteúdo de uma seção: banco (se ativo) tem prioridade; senão, a copy do briefing. */
@@ -45,7 +45,7 @@ export default async function LandingPage() {
   const reviews = reviewsRaw.map((r) => ({ id: r.id, name: r.name, text: r.text, photoUrl: r.photoUrl }));
 
   // Pacotes: produto do banco (preço editável) + conteúdo da copy (features/bônus/imagem).
-  const images: Record<string, string> = { "pacote-completo": `${REF}/pacote-completo.webp` };
+  const images: Record<string, string> = { "pacote-completo": `/img/pacote-completo.webp` };
   const toCard = (pk: (typeof LP_PACKAGES)[number]): PackageCard | null => {
     const p = catalog.find((c) => c.slug === pk.slug);
     if (!p) return null;

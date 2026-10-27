@@ -406,7 +406,6 @@ export function CheckoutClient({ requireCpf, checkoutNote, shippingNote, consent
     <form onSubmit={submit} noValidate className="container-page grid gap-6 py-4 sm:py-6 lg:grid-cols-[1fr_380px] lg:items-start lg:gap-10">
       <div className="space-y-5">
         <h1 className="font-display text-3xl font-extrabold sm:text-4xl">Finalizar compra</h1>
-        <TrustSeals cnpj={cnpj} companyName={companyName} supportEmail={supportEmail} />
 
         {/* Resumo imediato (mobile) */}
         <section className="card p-4 lg:hidden">

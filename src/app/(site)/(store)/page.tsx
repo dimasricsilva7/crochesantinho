@@ -60,7 +60,7 @@ export default async function LandingPage() {
       features: pk.features,
       bonuses: (pk as { bonuses?: string[] }).bonuses,
       excludes: (pk as { excludes?: string }).excludes,
-      image: images[pk.slug],
+      image: p.imageUrl || images[pk.slug],
       product: { id: p.id, name: p.name, sku: p.sku, priceCents: p.priceCents, category: p.category },
     };
   };

@@ -59,10 +59,22 @@ function parseConfig(type: string, fd: FormData, prev: Record<string, unknown>):
     case "offer":
       c.productId = str(fd, "cfg_productId", 40);
       break;
-    case "models_included":
-      c.deliveryNote = str(fd, "cfg_deliveryNote", 300);
-      c.sprites = stringList(fd, "cfg_sprites").filter((s) => (SPRITE_KEYS as string[]).includes(s)).slice(0, 6);
+    case "models_included": {
+      const saints = (k: string) =>
+        jsonArray<{ n?: unknown; name?: unknown; title?: unknown; attrs?: unknown; img?: unknown }>(fd, k)
+          .slice(0, 30)
+          .map((s, i) => ({
+            n: Number.isFinite(Number(s?.n)) ? Number(s.n) : i + 1,
+            name: String(s?.name ?? "").slice(0, 80),
+            title: String(s?.title ?? "").slice(0, 120),
+            attrs: String(s?.attrs ?? "").slice(0, 300),
+            img: (() => { const v = String(s?.img ?? "").trim(); return /^(https:\/\/|\/)/.test(v) ? v.slice(0, 500) : ""; })(),
+          }))
+          .filter((s) => s.name);
+      c.santas = saints("cfg_santas");
+      c.santos = saints("cfg_santos");
       break;
+    }
     case "complete_kit":
       c.productIds = jsonArray<string>(fd, "cfg_productIds").filter((x) => typeof x === "string");
       break;

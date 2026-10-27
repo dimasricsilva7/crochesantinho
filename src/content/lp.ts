@@ -68,7 +68,7 @@ export const LP_SECTIONS: LpSection[] = [
     ctaTarget: "#oferta",
     config: {
       eyebrow: "Santinhas de Crochê · receitas de amigurumi",
-      trust: "Com 50% de desconto · a partir de R$ 19,90 · PDF no e-mail · 7 dias de garantia",
+      trust: "20 receitas (10 santas + 10 santos) · a partir de R$ 19,90 · PDF no e-mail · 7 dias de garantia",
       image: `${REF}/checkout-santas.webp`,
     },
   },
@@ -180,7 +180,7 @@ export const LP_SECTIONS: LpSection[] = [
     type: "offer",
     label: "Oferta (pacotes)",
     title: "Escolha o seu pacote",
-    subtitle: "Produto digital: você recebe os PDFs por e-mail. Acesso vitalício, imprima quantas vezes quiser.",
+    subtitle: "São 20 receitas — 10 santas e 10 santos. Produto digital: você recebe os PDFs por e-mail. Acesso vitalício, imprima quantas vezes quiser.",
     config: {},
   },
   {

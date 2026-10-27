@@ -708,6 +708,15 @@ model Setting {
   updatedBy String?
 }
 
+/// Imagens enviadas pelo admin, guardadas no banco (sem depender do Vercel Blob). Servidas em /media/[id].
+model MediaAsset {
+  id        String   @id @default(cuid())
+  mime      String
+  data      Bytes
+  name      String?
+  createdAt DateTime @default(now())
+}
+
 /// Modelos de mensagem para recuperação manual (WhatsApp/e-mail). Nada é enviado automaticamente.
 model MessageTemplate {
   id        String   @id @default(cuid())

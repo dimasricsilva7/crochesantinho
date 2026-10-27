@@ -1,7 +1,7 @@
+import type { ReactNode } from "react";
 import { LandingTracker, StickyMobileCTA } from "@/components/landing/client";
 import { DiscountWheel } from "@/components/landing/DiscountWheel";
 import { Autora, Colecao, Conteudo, Destino, Fechamento, FaqList, Garantia, Hero, Livro, Narrative, Oferta, Pecas, Reviews, VideoSection, type Sec } from "@/components/landing/croche";
-import { SymbolRow } from "@/components/landing/icons";
 import type { PackageCard } from "@/components/landing/PricingCards";
 import { LP_FAQ, LP_PACKAGES, LP_SECTIONS } from "@/content/lp";
 import { getPublicCatalog } from "@/server/catalog";
@@ -44,10 +44,6 @@ export default async function LandingPage() {
   const faqs = faqsRaw.length ? faqsRaw.map((f) => ({ question: f.question, answer: f.answer })) : LP_FAQ;
   const reviews = reviewsRaw.map((r) => ({ id: r.id, name: r.name, text: r.text, photoUrl: r.photoUrl }));
 
-  // Vídeo: só aparece se a seção estiver ativa E tiver URL (dono liga/desliga no admin).
-  const videoRow = sections.find((s) => s.key === "video");
-  const showVideo = Boolean(videoRow && videoRow.active && videoRow.videoUrl);
-
   // Pacotes: produto do banco (preço editável) + conteúdo da copy (features/bônus/imagem).
   const images: Record<string, string> = { "pacote-completo": `${REF}/pacote-completo.webp` };
   const toCard = (pk: (typeof LP_PACKAGES)[number]): PackageCard | null => {
@@ -70,25 +66,36 @@ export default async function LandingPage() {
   };
   const packages: PackageCard[] = LP_PACKAGES.map(toCard).filter((x): x is PackageCard => x !== null);
 
+  // Renderizadores por chave de seção. A ORDEM vem do admin (sortOrder); se o banco estiver vazio,
+  // cai na ordem padrão de LP_SECTIONS.
+  const renderers: Record<string, (sec: Sec) => ReactNode> = {
+    hero: (s) => <Hero sec={s} />,
+    dor: (s) => <Narrative sec={s} id="dor" tone="rose" />,
+    video: (s) => (s.videoUrl ? <VideoSection sec={s} url={s.videoUrl} poster={str(s.config, "posterUrl")} /> : null),
+    conteudo: (s) => <Conteudo sec={s} />,
+    pecas: (s) => <Pecas sec={s} />,
+    livro: (s) => <Livro sec={s} />,
+    destino: (s) => <Destino sec={s} />,
+    colecao: (s) => <Colecao sec={s} />,
+    diferencial: (s) => <Narrative sec={s} id="diferencial" tone="soft" flip />,
+    reviews: (s) => <Reviews sec={s} reviews={reviews} />,
+    autora: (s) => <Autora sec={s} />,
+    oferta: (s) => <Oferta sec={s} packages={packages} />,
+    garantia: (s) => <Garantia sec={s} />,
+    faq: (s) => <FaqList title={s.title || "Perguntas frequentes"} faqs={faqs} />,
+    fechamento: (s) => <Fechamento sec={s} />,
+  };
+
+  const dbActive = sections.filter((s) => s.active).sort((a, b) => a.sortOrder - b.sortOrder);
+  const orderedKeys = dbActive.length ? dbActive.map((s) => s.key) : LP_SECTIONS.map((s) => s.key);
+
   return (
     <>
       <LandingTracker />
-      <Hero sec={get("hero")} />
-      <Narrative sec={get("dor")} id="dor" tone="rose" />
-      {showVideo && <VideoSection sec={get("video")} url={videoRow!.videoUrl!} poster={str((videoRow!.config ?? {}) as Record<string, unknown>, "posterUrl")} />}
-      <Conteudo sec={get("conteudo")} />
-      <Pecas sec={get("pecas")} />
-      <Livro sec={get("livro")} />
-      <Destino sec={get("destino")} />
-      <Colecao sec={get("colecao")} />
-      <SymbolRow className="py-6" />
-      <Narrative sec={get("diferencial")} id="diferencial" tone="soft" flip />
-      <Reviews sec={get("reviews")} reviews={reviews} />
-      <Autora sec={get("autora")} />
-      <Oferta sec={get("oferta")} packages={packages} />
-      <Garantia sec={get("garantia")} />
-      <FaqList title={get("faq").title || "Perguntas frequentes"} faqs={faqs} />
-      <Fechamento sec={get("fechamento")} />
+      {orderedKeys.map((key) => {
+        const r = renderers[key];
+        return r ? <div key={key}>{r(get(key))}</div> : null;
+      })}
       <DiscountWheel />
       <StickyMobileCTA label={settings.sticky_cta_label || "ESCOLHER MEU PACOTE"} />
     </>

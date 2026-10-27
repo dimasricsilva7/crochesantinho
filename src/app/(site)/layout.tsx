@@ -1,5 +1,4 @@
 import { CartProvider } from "@/components/cart/CartProvider";
-import { CartDrawer } from "@/components/cart/CartDrawer";
 import { Analytics } from "@/components/providers/Analytics";
 import { CookieBanner } from "@/components/providers/CookieBanner";
 import { assignmentMap } from "@/lib/experiments";
@@ -14,7 +13,6 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
   return (
     <CartProvider>
       {children}
-      <CartDrawer />
       <Analytics metaPixelIds={ids.metaPixelIds} gaId={ids.gaId} bannerEnabled={bannerEnabled} experiments={assignmentMap(assignments)} />
       {bannerEnabled && <CookieBanner />}
     </CartProvider>

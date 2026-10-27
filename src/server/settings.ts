@@ -36,9 +36,9 @@ export const isOn = (v: string | undefined) => v === "true";
 const PIXEL_RE = /^\d{5,20}$/;
 const GA_RE = /^G-[A-Z0-9]{4,15}$/;
 
-/** Lista de pixels (até 3), separados por vírgula ou espaço. */
+/** Lista de pixels (até 5), separados por vírgula ou espaço. */
 export function parsePixelIds(raw: string | undefined): string[] {
-  return [...new Set((raw ?? "").split(/[\s,;]+/).map((v) => v.trim()).filter((v) => PIXEL_RE.test(v)))].slice(0, 3);
+  return [...new Set((raw ?? "").split(/[\s,;]+/).map((v) => v.trim()).filter((v) => PIXEL_RE.test(v)))].slice(0, 5);
 }
 
 /**

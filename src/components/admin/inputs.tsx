@@ -1,42 +1,31 @@
 "use client";
 
 import { useState } from "react";
-import { upload } from "@vercel/blob/client";
 import { inputCls, textareaCls, btnSecondary } from "./ui";
 import { COMPONENT_TYPES, PIXEL_ICONS } from "@/lib/domain";
 
-/** Campo de mídia: cole uma URL ou envie um arquivo (Vercel Blob; fallback local em dev). */
-export function MediaInput({ name, defaultValue, accept = "image/*", label, folder = "media" }: { name: string; defaultValue?: string | null; accept?: string; label?: string; folder?: string }) {
+/** Campo de mídia: cole uma URL ou envie um arquivo (imagem vai para o banco; vídeo por link). */
+export function MediaInput({ name, defaultValue, accept = "image/*", label }: { name: string; defaultValue?: string | null; accept?: string; label?: string; folder?: string }) {
   const [url, setUrl] = useState(defaultValue ?? "");
   const [status, setStatus] = useState<string | null>(null);
   const embed = /youtu\.?be/i.test(url) ? "YouTube" : /vimeo\.com/i.test(url) ? "Vimeo" : null;
   const isVideo = /\.(mp4|webm|mov)(\?|$)/i.test(url) || accept.startsWith("video");
 
   async function onFile(file: File) {
+    // Vídeo não é guardado no banco (muito grande): use link do YouTube/Vimeo ou MP4 hospedado.
+    if (accept.startsWith("video") || /^video\//.test(file.type)) {
+      setStatus("Para vídeo, cole um link do YouTube, Vimeo ou de um .mp4 hospedado — o upload direto não está disponível.");
+      return;
+    }
     setStatus("Enviando…");
     try {
-      const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "-").slice(-80);
-      try {
-        const blob = await upload(`${folder}/${safe}`, file, { access: "public", handleUploadUrl: "/api/admin/blob" });
-        setUrl(blob.url);
-      } catch (blobErr) {
-        // Em produção não existe fallback (o servidor recusa arquivos grandes): mostra o erro real
-        if (process.env.NODE_ENV === "production") {
-          const msg = blobErr instanceof Error ? blobErr.message : "";
-          throw new Error(
-            /blocked|suspend|forbidden|403/i.test(msg)
-              ? "Armazenamento de arquivos da Vercel bloqueado (limite do plano). Cole um link do YouTube/Vimeo ou de um MP4 hospedado em outro lugar."
-              : `Falha no upload${msg ? `: ${msg}` : ""}. Você pode colar um link do YouTube/Vimeo no lugar.`
-          );
-        }
-        const fd = new FormData();
-        fd.append("file", file);
-        const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error ?? "Falha no upload");
-        setUrl(json.url);
-      }
-      setStatus("Enviado ✓ — lembre de salvar");
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error ?? "Falha no upload");
+      setUrl(json.url);
+      setStatus("Enviado — lembre de salvar");
     } catch (e) {
       setStatus(e instanceof Error ? e.message : "Falha no upload");
     }
@@ -106,6 +95,8 @@ export function ListEditor<T extends Record<string, unknown>>({ name, fields, de
                 <input type="checkbox" checked={Boolean(it[f.key])} onChange={(e) => update(i, f.key, e.target.checked)} className="mt-2 h-5 w-5" />
               ) : f.type === "number" ? (
                 <input type="number" value={String(it[f.key] ?? "")} onChange={(e) => update(i, f.key, e.target.value === "" ? null : Number(e.target.value))} className={inputCls} />
+              ) : f.type === "media" ? (
+                <MediaCell value={String(it[f.key] ?? "")} onChange={(v) => update(i, f.key, v)} />
               ) : (
                 <input value={String(it[f.key] ?? "")} onChange={(e) => update(i, f.key, e.target.value)} placeholder={f.placeholder} className={inputCls} />
               )}
@@ -122,6 +113,60 @@ export function ListEditor<T extends Record<string, unknown>>({ name, fields, de
         + {addLabel}
       </button>
     </div>
+  );
+}
+
+/** Célula de imagem (dentro de um ListEditor): link + upload para o banco + prévia. */
+function MediaCell({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [status, setStatus] = useState<string | null>(null);
+  async function onFile(file: File) {
+    setStatus("Enviando…");
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error ?? "Falha no upload");
+      onChange(json.url);
+      setStatus(null);
+    } catch (e) {
+      setStatus(e instanceof Error ? e.message : "Falha no upload");
+    }
+  }
+  return (
+    <div>
+      <div className="flex items-start gap-1.5">
+        {value && /^(https:|\/)/.test(value) && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={value} alt="" className="h-12 w-12 shrink-0 rounded-md border border-slate-200 object-cover" />
+        )}
+        <input value={value} onChange={(e) => onChange(e.target.value.trim())} placeholder="Link ou envie →" className={inputCls} />
+        <label className={`${btnSecondary} cursor-pointer whitespace-nowrap px-2`}>
+          Enviar
+          <input type="file" accept="image/*" className="sr-only" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
+        </label>
+      </div>
+      {status && <p className="mt-0.5 text-[10px] text-slate-500">{status}</p>}
+    </div>
+  );
+}
+
+/** Editor de santas/santos: nome, título, descrição e imagem (upload ou link) por item. */
+export function SaintsEditor({ name, defaultValue }: { name: string; defaultValue: Record<string, unknown>[] }) {
+  return (
+    <ListEditor
+      name={name}
+      defaultValue={defaultValue}
+      addLabel="Adicionar santo(a)"
+      newItem={() => ({ n: (defaultValue.length || 0) + 1, name: "", title: "", attrs: "", img: "" })}
+      fields={[
+        { key: "n", label: "Nº", type: "number", width: "w-16" },
+        { key: "name", label: "Nome", width: "min-w-[150px] flex-1" },
+        { key: "title", label: "Título (itálico rosa)", width: "min-w-[150px] flex-1" },
+        { key: "attrs", label: "Descrição / atributos", type: "textarea", width: "min-w-[180px] flex-[2]" },
+        { key: "img", label: "Imagem", type: "media", width: "min-w-[220px] flex-1" },
+      ]}
+    />
   );
 }
 

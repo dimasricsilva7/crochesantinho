@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { Card, Field, PageHeader, inputCls, textareaCls } from "@/components/admin/ui";
 import { ActionForm, SubmitButton } from "@/components/admin/client";
-import { IconItemsEditor, MediaInput, ProductMultiSelect, StatsEditor, StepsEditor, StringListEditor } from "@/components/admin/inputs";
+import { IconItemsEditor, MediaInput, ProductMultiSelect, SaintsEditor, StatsEditor, StepsEditor, StringListEditor } from "@/components/admin/inputs";
 import { SECTION_TYPES, type SectionType } from "@/lib/domain";
 import { SPRITE_KEYS, SPRITES } from "@/lib/pixel-art";
 import { db } from "@/lib/db";
@@ -97,8 +97,14 @@ export default async function EditSectionPage({ params }: { params: Promise<{ ke
               {t === "offer" && productSelect("Produto em destaque (composição exibida)")}
               {t === "models_included" && (
                 <>
-                  <Field label="Como os modelos são entregues" className="md:col-span-2" hint="Não prometa formato/entrega que ainda não existe."><input name="cfg_deliveryNote" defaultValue={s(c.deliveryNote)} className={inputCls} /></Field>
-                  <div className="md:col-span-2"><p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Ilustrações (chaves: {SPRITE_KEYS.join(", ")})</p><StringListEditor name="cfg_sprites" defaultValue={arr<string>(c.sprites)} /></div>
+                  <div className="md:col-span-2">
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Santas — nome, título, descrição e imagem (upload ou link)</p>
+                    <SaintsEditor name="cfg_santas" defaultValue={arr<Record<string, unknown>>(c.santas)} />
+                  </div>
+                  <div className="md:col-span-2">
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Santos — nome, título, descrição e imagem (upload ou link)</p>
+                    <SaintsEditor name="cfg_santos" defaultValue={arr<Record<string, unknown>>(c.santos)} />
+                  </div>
                 </>
               )}
               {t === "complete_kit" && (

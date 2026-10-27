@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useCart, type ProductRef } from "@/components/cart/CartProvider";
 import { gaEvent, metaEvent, track, trackOnce } from "@/lib/client/tracking";
@@ -21,22 +22,25 @@ export function AddToCartButton({
   source?: "cross_sell";
 }) {
   const cart = useCart();
-  const [done, setDone] = useState(false);
+  const router = useRouter();
+  const [going, setGoing] = useState(false);
   return (
     <button
       type="button"
       data-cta={element}
       data-product={product.id}
       className={className}
-      disabled={product.priceCents <= 0}
+      disabled={product.priceCents <= 0 || going}
       onClick={() => {
         if (kitSelect) track("kit_selected", { productId: product.id, valueCents: product.priceCents, element });
-        cart.add(product, { element, source });
-        setDone(true);
-        setTimeout(() => setDone(false), 1500);
+        // Sem carrinho: escolheu o pacote, substitui o que havia e vai direto para o checkout.
+        if (kitSelect) cart.clear();
+        cart.add(product, { element, source, open: false });
+        setGoing(true);
+        router.push("/checkout");
       }}
     >
-      {done ? "Adicionado ✓" : label}
+      {going ? "Indo para o checkout…" : label}
     </button>
   );
 }

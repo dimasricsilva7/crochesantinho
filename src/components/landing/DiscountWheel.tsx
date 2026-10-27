@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { track } from "@/lib/client/tracking";
 import { IconFlower } from "./icons";
 
-const KEY = "fc_wheel_done";
+const KEY = "fc_wheel_v2";
 export const DISCOUNT_EVENT = "fc-discount";
 
 // Segmentos (visual). A agulha SEMPRE para no 50%.
@@ -45,7 +45,7 @@ export function DiscountWheel() {
 
   useEffect(() => {
     if (done) return;
-    const t = setTimeout(openOnce, 12000);
+    const t = setTimeout(openOnce, 7000);
     const offer = document.getElementById("oferta");
     let io: IntersectionObserver | null = null;
     if (offer && typeof IntersectionObserver !== "undefined") {

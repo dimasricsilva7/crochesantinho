@@ -506,9 +506,12 @@ export function CheckoutClient({ requireCpf, checkoutNote, shippingNote, consent
             </div>
             {q.bumps.filter((b, i) => showAllBumps || i < 2 || cart.bumpIds.includes(b.id)).map((b) => {
               const selected = cart.bumpIds.includes(b.id);
+              const featured = b.id === q.bumps[0]?.id;
               return (
-                <label key={b.id} className={`block cursor-pointer overflow-hidden rounded-card border transition ${selected ? "border-success shadow-soft" : "border-line bg-surface"}`}>
-                  <div className="bg-secondary/15 px-4 py-2 text-center text-[11px] font-bold uppercase tracking-[0.1em] text-ink">Oferta especial · só neste pedido</div>
+                <label key={b.id} className={`block cursor-pointer overflow-hidden rounded-card transition ${selected ? "border-2 border-success shadow-soft" : featured ? "border-2 border-secondary shadow-lift" : "border border-line bg-surface"}`}>
+                  <div className={`px-4 py-2 text-center text-[11px] font-bold uppercase tracking-[0.1em] ${featured ? "bg-gradient-to-r from-secondary to-[#B88322] text-white" : "bg-secondary/15 text-ink"}`}>
+                    {featured ? "Mais pedida · oferta em destaque" : "Oferta especial · só neste pedido"}
+                  </div>
                   {b.imageUrl && (
                     <div className="relative aspect-[16/9] w-full bg-bg">
                       <Image src={b.imageUrl} alt={b.productName} fill sizes="(min-width:640px) 600px, 100vw" className="object-cover" />

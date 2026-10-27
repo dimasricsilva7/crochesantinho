@@ -36,7 +36,7 @@ export function Divider() {
 export function Hero({ sec }: { sec: Sec }) {
   const eyebrow = str(sec.config, "eyebrow");
   const trust = str(sec.config, "trust");
-  const img = str(sec.config, "image") || sec.imageUrl;
+  const img = sec.imageUrl || str(sec.config, "image");
   return (
     <section id="inicio" className="relative overflow-hidden bg-gradient-to-b from-accent via-accent to-[#2a3f63] text-white">
       <div className="pointer-events-none absolute inset-0 opacity-[0.07]" style={{ backgroundImage: "radial-gradient(circle, #fff 1px, transparent 1.4px)", backgroundSize: "22px 22px" }} aria-hidden="true" />
@@ -67,7 +67,7 @@ export function Narrative({ sec, id, tone = "default", flip = false }: { sec: Se
       <section id={id} className={`section ${bg}`}>
         <div className={`container-page grid items-center gap-8 lg:grid-cols-2 lg:gap-14 ${flip ? "lg:[&>div:first-child]:order-2" : ""}`}>
           <div className="relative aspect-[4/5] overflow-hidden rounded-[1.5rem] border border-line bg-rose/40 shadow-soft sm:aspect-[4/3] lg:aspect-[4/5]">
-            <Image src={img} alt={sec.title} fill sizes="(min-width:1024px) 48vw, 100vw" className="object-contain p-3" />
+            <Image src={img} alt={sec.title} fill sizes="(min-width:1024px) 48vw, 100vw" className="object-cover" />
           </div>
           <div>
             <h2 className="h-section">{sec.title}</h2>
@@ -116,7 +116,7 @@ export function Conteudo({ sec }: { sec: Sec }) {
 
 /* ───────────── Folha das peças ───────────── */
 export function Pecas({ sec }: { sec: Sec }) {
-  const img = str(sec.config, "image");
+  const img = sec.imageUrl || str(sec.config, "image");
   const pieces = arr<string>(sec.config, "pieces");
   return (
     <section id="pecas" className="section bg-bg">
@@ -145,7 +145,7 @@ export function Pecas({ sec }: { sec: Sec }) {
 
 /* ───────────── Livro 150 páginas ───────────── */
 export function Livro({ sec }: { sec: Sec }) {
-  const img = str(sec.config, "image");
+  const img = sec.imageUrl || str(sec.config, "image");
   const items = arr<{ icon?: string; title: string; text: string }>(sec.config, "items");
   return (
     <section id="livro" className="section bg-surface">
@@ -178,7 +178,7 @@ export function Livro({ sec }: { sec: Sec }) {
 
 /* ───────────── Para quem você vai fazer ───────────── */
 export function Destino({ sec }: { sec: Sec }) {
-  const img = str(sec.config, "image");
+  const img = sec.imageUrl || str(sec.config, "image");
   const cards = arr<{ label: string; quote: string; text: string }>(sec.config, "cards");
   return (
     <section id="destino" className="section bg-gradient-to-b from-rose/60 to-bg">
@@ -386,7 +386,7 @@ export function FaqList({ title, faqs }: { title: string; faqs: { question: stri
 
 /* ───────────── Fechamento (com imagem) ───────────── */
 export function Fechamento({ sec }: { sec: Sec }) {
-  const img = str(sec.config, "image") || sec.imageUrl;
+  const img = sec.imageUrl || str(sec.config, "image");
   return (
     <section id="fechamento" className="section bg-gradient-to-b from-bg to-accent/[0.08]">
       <div className="container-page mx-auto max-w-4xl">
